@@ -1,0 +1,120 @@
+.example-card {
+  max-width: 100%;
+}
+
+.full-width {
+  width: 100%;
+  position: relative;
+}
+
+// .movesearchbox {
+//   margin-left: 16px;
+// }
+
+@media only screen and (min-width: 1100px) {
+  .movesearchbox {
+    margin-left: 80px !important;
+    margin-top: 50px;
+  }
+}
+
+@media only screen and (max-width: 1191px) {
+  .movesearchbox {
+    margin-top: 80px !important;
+    margin-left: -160px !important;
+  }
+}
+
+@media only screen and (max-width: 1000px) {
+  .movesearchbox {
+    margin-top: 80px !important;
+    margin-left: -120px !important;
+  }
+}
+
+@media only screen and (max-width: 760px) {
+  .movesearchbox {
+    margin-left: 0px !important;
+    margin-top: -30px !important;
+  }
+}
+
+@media only screen and (max-width: 760px) {
+  .moveCart {
+    margin-top: -28px !important;
+  }
+}
+
+.outline {
+  box-shadow: 0 4px 4px -4px rgba(0, 0, 0, 0.12);
+  background-color: #fff;
+  height: 90px;
+  position: absolute;
+}
+
+.movecols {
+  margin-top: 20px;
+}
+
+.centercols {
+  margin-top: 10px;
+  position: relative;
+}
+
+.spacecontainer {
+  margin-top: 20px;
+}
+.spacerow {
+  margin-top: 25px;
+}
+
+.latest {
+  font-size: 20px !important;
+  font-weight: 400 !important;
+}
+
+.example-card {
+  max-width: 400px;
+}
+
+.cartbtn {
+  width: 100%;
+}
+
+.productSearch {
+  background-color: #fff;
+  height: 80px;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05) !important;
+  margin-bottom: 20px;
+}
+@media only screen and (max-width: 1210px) {
+  .productSearch {
+    height: 230px;
+  }
+}
+
+// @media only screen and (max-width: 760px) {
+//   .productSearch {
+//     height: 200px;
+//     position: fixed;
+//     z-index: 999;
+//     width: 100%;
+//   }
+// }
+
+.categoryCard {
+  background-color: #fff;
+  border-radius: 1px;
+  text-align: center;
+  padding: 0.625rem;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+.category {
+  margin-left: -3px;
+}
+
+.category :hover {
+  background-color: black;
+  color: #fff;
+}
