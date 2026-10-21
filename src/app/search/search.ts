@@ -4,7 +4,6 @@ import { MatIcon } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatBadgeModule } from '@angular/material/badge';
-import { Cart } from '../cart/cart';
 
 @Component({
   selector: 'app-search',
@@ -13,5 +12,4 @@ import { Cart } from '../cart/cart';
   styleUrl: './search.scss',
 })
 export class Search {
-  constructor(readonly cart: Cart) {}
 }

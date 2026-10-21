@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Home } from './home';
-import { Cart } from '../cart/cart';
 
 describe('Home', () => {
   let component: Home;
@@ -22,28 +21,43 @@ describe('Home', () => {
     expect(component).toBeTruthy();
   });
 
-  it('adds a product to the cart when Add to Cart is clicked', () => {
-    const cart = TestBed.inject(Cart);
-    const addToCartButton: HTMLButtonElement =
-      fixture.nativeElement.querySelector('.cartbtn');
+  it('shows only products in the selected category', () => {
+    const category = component.categories[0];
+    const expectedProducts = component.products().filter((product) => product.category === category);
 
-    addToCartButton.click();
+    component.selectCategory(category);
     fixture.detectChanges();
 
-    expect(cart.itemCount()).toBe(1);
-    expect(cart.items()[0]).toEqual({
-      product: component.product,
-      quantity: 1,
-    });
+    const displayedNames = Array.from(
+      fixture.nativeElement.querySelectorAll('.example-card h3'),
+      (heading: Element) => heading.textContent?.trim(),
+    );
+    expect(displayedNames).toEqual(expectedProducts.map((product) => product.name));
   });
 
-  it('increments the cart quantity when the same product is added again', () => {
-    const cart = TestBed.inject(Cart);
-    component.addToCart();
-    component.addToCart();
+  it('shows all products when the category filter is cleared', () => {
+    component.selectCategory(component.categories[0]);
+    component.selectCategory(null);
+    fixture.detectChanges();
 
-    expect(cart.itemCount()).toBe(2);
-    expect(cart.items()).toHaveSize(1);
-    expect(cart.items()[0].quantity).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.example-card').length).toBe(
+      component.products().length,
+    );
+  });
+
+  it('opens the product details dialog from a product card', () => {
+    const product = component.products()[0];
+
+    fixture.nativeElement.querySelector('.add-to-cart').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#product-title').textContent).toContain(
+      product.name,
+    );
+
+    fixture.nativeElement.querySelector('[aria-label="Close product details"]').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
   });
 });

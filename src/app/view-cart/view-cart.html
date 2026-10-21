@@ -1,0 +1,112 @@
+<div class="cart-overlay">
+  <button
+    class="cart-backdrop"
+    type="button"
+    aria-label="Close cart"
+    (click)="closeDialog()"
+  ></button>
+
+  <section
+    class="cart-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cart-title"
+    tabindex="-1"
+  >
+    <header class="cart-header">
+      <div>
+        <h2 id="cart-title">Cart</h2>
+        <p>{{ cartService.itemCount() }} items</p>
+      </div>
+      <button
+        class="icon-button close-button"
+        type="button"
+        aria-label="Close cart"
+        (click)="closeDialog()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </header>
+
+    <div class="cart-content">
+      @if (cartService.cartItems().length > 0) {
+        <ul class="cart-items">
+          @for (item of cartService.cartItems(); track item.variantKey ?? item.id) {
+            <li class="cart-item">
+              @if (item.imageUrl) {
+                <img class="product-image" [src]="item.imageUrl" [alt]="item.name" />
+              } @else {
+                <div class="product-image image-placeholder" aria-hidden="true">
+                  <mat-icon>checkroom</mat-icon>
+                </div>
+              }
+
+              <div class="product-details">
+                <h3>{{ item.name }}</h3>
+                <p class="product-price">{{ item.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+                @if (item.dhotiSize || item.shirtSize || item.sleeveLength) {
+                  <p class="product-options">
+                    @if (item.dhotiSize) { Dhoti: {{ item.dhotiSize }} }
+                    @if (item.shirtSize) { · Shirt: {{ item.shirtSize }} }
+                    @if (item.sleeveLength) { · {{ item.sleeveLength }} }
+                  </p>
+                }
+                <div class="item-controls">
+                  <div class="quantity-control" [attr.aria-label]="'Quantity: ' + item.quantity">
+                    <button
+                      class="icon-button quantity-button"
+                      type="button"
+                      [attr.aria-label]="'Decrease quantity of ' + item.name"
+                      (click)="cartService.decreaseQuantity(item.variantKey ?? item.id)"
+                    >
+                      <mat-icon>remove</mat-icon>
+                    </button>
+                    <span>{{ item.quantity }}</span>
+                    <button
+                      class="icon-button quantity-button"
+                      type="button"
+                      [attr.aria-label]="'Increase quantity of ' + item.name"
+                      (click)="cartService.increaseQuantity(item.variantKey ?? item.id)"
+                    >
+                      <mat-icon>add</mat-icon>
+                    </button>
+                  </div>
+                  <button
+                    class="icon-button remove-button"
+                    type="button"
+                    [attr.aria-label]="'Remove ' + item.name + ' from cart'"
+                    (click)="cartService.removeFromCart(item.variantKey ?? item.id)"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty-cart">
+          <mat-icon>shopping_bag</mat-icon>
+          <h3>Your cart is empty</h3>
+          <p>Add something you love and it will appear here.</p>
+        </div>
+      }
+    </div>
+
+    <footer class="cart-footer">
+      <div class="subtotal">
+        <span>Subtotal</span>
+        <strong>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+      </div>
+      <button
+        class="checkout-button"
+        type="button"
+        [disabled]="cartService.cartItems().length === 0"
+        (click)="goToCheckout()"
+      >
+        Checkout
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </footer>
+  </section>
+</div>

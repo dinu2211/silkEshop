@@ -1,0 +1,228 @@
+<div class="checkout-page">
+  <div class="checkout-shell">
+    <a class="back-link" routerLink="/">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      Continue shopping
+    </a>
+
+    <header class="checkout-heading">
+      <p class="eyebrow">YOUR ORDER, YOUR WAY</p>
+      <h1>Checkout</h1>
+      <p class="heading-copy">A few details and your handpicked pieces are on their way.</p>
+
+      <ol class="checkout-progress" aria-label="Checkout progress">
+        <li class="progress-step active">
+          <span>1</span>
+          <span>Delivery details</span>
+        </li>
+        <li class="progress-line" aria-hidden="true"></li>
+        <li class="progress-step">
+          <span>2</span>
+          <span>Confirm on WhatsApp</span>
+        </li>
+      </ol>
+    </header>
+
+    @if (cartService.cartItems().length === 0) {
+      <section class="empty-checkout" aria-labelledby="empty-checkout-title">
+        <span class="empty-icon"><mat-icon aria-hidden="true">shopping_bag</mat-icon></span>
+        <h2 id="empty-checkout-title">Your bag is waiting</h2>
+        <p>Add something special before heading to checkout.</p>
+        <a class="primary-link" routerLink="/">Explore the collection</a>
+      </section>
+    } @else {
+      <form
+        #shippingForm="ngForm"
+        (ngSubmit)="sendOrderToWhatsApp(shippingForm)"
+        class="checkout-layout"
+      >
+        <section class="shipping-card" aria-labelledby="shipping-title">
+          <div class="section-heading">
+            <span class="section-number">01</span>
+            <div>
+              <h2 id="shipping-title">Where should we send it?</h2>
+              <p>Your details are shared with the shop only when you continue to WhatsApp.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field field-wide">
+              <span>Full name <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="fullName"
+                [(ngModel)]="shippingDetails.fullName"
+                autocomplete="name"
+                placeholder="Name of the recipient"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>Mobile number <span class="required-mark">*</span></span>
+              <div class="phone-input">
+                <span aria-hidden="true">+91</span>
+                <input
+                  type="tel"
+                  name="phone"
+                  [(ngModel)]="shippingDetails.phone"
+                  autocomplete="tel-national"
+                  inputmode="numeric"
+                  placeholder="98765 43210"
+                  pattern="[0-9]{10}"
+                  maxlength="10"
+                  aria-describedby="phone-hint"
+                  required
+                />
+              </div>
+              <small id="phone-hint">Enter a 10-digit Indian mobile number.</small>
+            </label>
+
+            <label class="field">
+              <span>Email <span class="optional-label">Optional</span></span>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="shippingDetails.email"
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+            </label>
+
+            <label class="field field-wide">
+              <span>House / street address <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="address"
+                [(ngModel)]="shippingDetails.address"
+                autocomplete="street-address"
+                placeholder="House number and street name"
+                required
+              />
+            </label>
+
+            <label class="field field-wide">
+              <span>Apartment, suite, landmark <span class="optional-label">Optional</span></span>
+              <input
+                type="text"
+                name="apartment"
+                [(ngModel)]="shippingDetails.apartment"
+                placeholder="Apartment, floor, or nearby landmark"
+              />
+            </label>
+
+            <label class="field">
+              <span>Town / city <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="city"
+                [(ngModel)]="shippingDetails.city"
+                autocomplete="address-level2"
+                placeholder="Your city"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>State <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="state"
+                [(ngModel)]="shippingDetails.state"
+                autocomplete="address-level1"
+                placeholder="Your state"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>PIN code <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="postalCode"
+                [(ngModel)]="shippingDetails.postalCode"
+                autocomplete="postal-code"
+                inputmode="numeric"
+                placeholder="6-digit PIN code"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                required
+              />
+            </label>
+
+            <label class="field field-wide">
+              <span>Delivery instructions <span class="optional-label">Optional</span></span>
+              <textarea
+                name="note"
+                [(ngModel)]="shippingDetails.note"
+                rows="3"
+                placeholder="Anything we should know about your delivery?"
+              ></textarea>
+            </label>
+          </div>
+        </section>
+
+        <aside class="order-card" aria-labelledby="order-title">
+          <div class="order-card-heading">
+            <div>
+              <p class="eyebrow">JUST FOR YOU</p>
+              <h2 id="order-title">Order summary</h2>
+            </div>
+            <span class="item-count">{{ cartService.itemCount() }} items</span>
+          </div>
+
+          <ul class="order-items">
+            @for (item of cartService.cartItems(); track item.id) {
+              <li class="order-item">
+                @if (item.imageUrl) {
+                  <img [src]="item.imageUrl" [alt]="item.name" />
+                } @else {
+                  <span class="order-image-placeholder" aria-hidden="true">
+                    <mat-icon>checkroom</mat-icon>
+                  </span>
+                }
+                <div class="item-copy">
+                  <h3>{{ item.name }}</h3>
+                  <p>Qty {{ item.quantity }} <span aria-hidden="true">·</span> {{ item.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+                </div>
+                <strong>{{ item.price * item.quantity | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+              </li>
+            }
+          </ul>
+
+          <div class="price-breakdown">
+            <div>
+              <span>Subtotal</span>
+              <span>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+            </div>
+            <div>
+              <span>Shipping</span>
+              <span class="shipping-pending">Confirmed on WhatsApp</span>
+            </div>
+          </div>
+
+          <div class="order-total">
+            <span>Order subtotal</span>
+            <strong>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+          <p class="shipping-note">The shop will confirm delivery charges and your final total in WhatsApp.</p>
+
+          @if (shippingForm.submitted && shippingForm.invalid) {
+            <p class="form-error" role="alert">Please complete the required fields with valid details.</p>
+          }
+
+          <button class="whatsapp-button" type="submit">
+            <span class="whatsapp-mark" aria-hidden="true">WA</span>
+            <span>Continue to WhatsApp</span>
+            <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+          </button>
+
+          <p class="payment-note">
+            <mat-icon aria-hidden="true">lock</mat-icon>
+            No payment is collected on this page. Confirm your order and payment options directly with us.
+          </p>
+        </aside>
+      </form>
+    }
+  </div>
+</div>

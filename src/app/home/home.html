@@ -1,11 +1,32 @@
 <div class="container spacecontainer">
-  <app-search></app-search>
+  <!-- <app-search></app-search> -->
   <div class="row category">
+    <div
+      class="col-md-2 mb-3 offset-0.8 categoryCard"
+    >
+      <button
+        type="button"
+        class="categoryButton"
+        [class.selected]="selectedCategory === null"
+        [attr.aria-pressed]="selectedCategory === null"
+        (click)="selectCategory(null)"
+      >
+        All categories
+      </button>
+    </div>
     <div
       class="col-md-2 mb-3 offset-0.8 categoryCard"
       *ngFor="let category of categories"
     >
-      {{ category }}
+      <button
+        type="button"
+        class="categoryButton"
+        [class.selected]="selectedCategory === category"
+        [attr.aria-pressed]="selectedCategory === category"
+        (click)="selectCategory(category)"
+      >
+        {{ category }}
+      </button>
     </div>
   </div>
   <div class="row">
@@ -14,213 +35,37 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-md-3 mb-3">
+    <div class="col-md-3 mb-3" *ngFor="let product of filteredProducts">
       <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
+        <div class="product-image-panel">
+          @if (product.imageUrl) {
+            <img class="product-image" [src]="product.imageUrl" [alt]="product.name" />
+          } @else {
+            <div class="image-placeholder" aria-hidden="true">Image unavailable</div>
+          }
+        </div>
+        <mat-card-content class="product-content">
+          <p class="product-category">{{ product.category }}</p>
+          <h3>{{ product.name }}</h3>
+          <p class="product-description">{{ product.description }}</p>
+          <div class="product-purchase">
+            <strong>{{ product.price | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            <button
+              type="button"
+              class="add-to-cart"
+              [attr.aria-label]="'View details for ' + product.name"
+              (click)="openProductDetails(product)"
+            >
+              View details
+            </button>
+          </div>
         </mat-card-content>
       </mat-card>
     </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
-    <div class="col-md-3 mb-3">
-      <mat-card class="example-card">
-        <img
-          mat-card-image
-          src="https://material.angular.io/assets/img/examples/shiba2.jpg"
-          alt="Photo of a Shiba Inu"
-        />
-        <mat-card-content>
-          <h3>Apple Air Pods</h3>
-        </mat-card-content>
-        <mat-card-content>
-          <p>Bluetooth headphones</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p>4.5 from 5 reviews</p>
-        </mat-card-content>
-        <mat-card-content>
-          <p><strong>$99.99</strong></p>
-        </mat-card-content>
-        <mat-card-content>
-          <button class="cartbtn" mat-raised-button color="primary" (click)="addToCart()">
-            Add to Cart
-          </button>
-        </mat-card-content>
-      </mat-card>
-    </div>
+
   </div>
 </div>
+
+@if (selectedProduct; as product) {
+  <app-product-details [product]="product" (close)="closeProductDetails()" />
+}

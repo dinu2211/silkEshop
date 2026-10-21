@@ -1,0 +1,126 @@
+<div class="details-overlay">
+  <button
+    class="details-backdrop"
+    type="button"
+    aria-label="Close product details"
+    (click)="close.emit()"
+  ></button>
+
+  <section
+    class="details-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="product-title"
+    tabindex="-1"
+  >
+    <button
+      class="close-button"
+      type="button"
+      aria-label="Close product details"
+      (click)="close.emit()"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <div class="product-image-panel">
+      @if (product.imageUrl) {
+        <img class="product-image" [src]="product.imageUrl" [alt]="product.name" />
+      } @else {
+        <div class="image-placeholder" aria-hidden="true">
+          <mat-icon>checkroom</mat-icon>
+        </div>
+      }
+    </div>
+
+    <div class="product-content">
+      <p class="product-category">{{ product.category }}</p>
+      <h2 id="product-title">{{ product.name }}</h2>
+      <p class="product-description">{{ product.description }}</p>
+      <p class="product-price">{{ product.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+
+      <div class="product-options">
+        @if (showsDhotiSize) {
+          <fieldset class="option-group">
+            <legend>Dhoti size</legend>
+            <div class="option-list">
+              @for (size of dhotiSizes; track size) {
+                <button
+                  class="option-button"
+                  type="button"
+                  [class.selected]="dhotiSize === size"
+                  [attr.aria-pressed]="dhotiSize === size"
+                  (click)="dhotiSize = size"
+                >
+                  {{ size }}
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
+
+        @if (showsShirtOptions) {
+          <fieldset class="option-group">
+            <legend>Shirt size</legend>
+            <div class="option-list">
+              @for (size of shirtSizes; track size) {
+                <button
+                  class="option-button"
+                  type="button"
+                  [class.selected]="shirtSize === size"
+                  [attr.aria-pressed]="shirtSize === size"
+                  (click)="shirtSize = size"
+                >
+                  {{ size }}
+                </button>
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="option-group">
+            <legend>Sleeve length</legend>
+            <div class="option-list">
+              @for (length of sleeveLengths; track length) {
+                <button
+                  class="option-button"
+                  type="button"
+                  [class.selected]="sleeveLength === length"
+                  [attr.aria-pressed]="sleeveLength === length"
+                  (click)="sleeveLength = length"
+                >
+                  {{ length }}
+                </button>
+              }
+            </div>
+          </fieldset>
+        }
+      </div>
+
+      <div class="purchase-row">
+        <div class="quantity-control" aria-label="Quantity">
+          <button
+            class="quantity-button"
+            type="button"
+            aria-label="Decrease quantity"
+            [disabled]="quantity <= 1"
+            (click)="decreaseQuantity()"
+          >
+            <mat-icon>remove</mat-icon>
+          </button>
+          <span aria-live="polite">{{ quantity }}</span>
+          <button
+            class="quantity-button"
+            type="button"
+            aria-label="Increase quantity"
+            (click)="increaseQuantity()"
+          >
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        <button class="add-to-cart" type="button" (click)="addToCart()">
+          Add to cart
+          <mat-icon>shopping_bag</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

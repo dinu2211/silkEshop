@@ -1,6 +1,7 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { MatBadge } from '@angular/material/badge';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatNavList } from '@angular/material/list';
@@ -9,18 +10,21 @@ import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/mat
 import { MatToolbar } from '@angular/material/toolbar';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
+import { CartService } from '../cart-service';
+import { ViewCart } from '../view-cart/view-cart';
 
 @Component({
   selector: 'app-header',
   imports: [MatSidenavContainer,MatSidenav,AsyncPipe,MatToolbar,MatNavList,MatSidenavContent,MatIcon
-    ,MatMenu,MatMenuTrigger,CommonModule
+    ,MatMenu,MatMenuTrigger,CommonModule,MatBadge,MatButton,ViewCart
   ],
   templateUrl: './header.html',
   styleUrl: './header.scss',
 })
 export class Header implements OnInit {
   isHandset$!: Observable<boolean>;
-  
+  cartService = inject(CartService);
+  isCartOpen = false;
   electronicsDevices:any;
   mobiles: string[] = [];
   accessories: string[] = [];
@@ -126,4 +130,3 @@ export class Header implements OnInit {
     });
   }
 }
-
