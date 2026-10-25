@@ -95,3 +95,7 @@ to delete function
 npx supabase functions delete create-razorpay-order --project-ref krrsrzekaxqfmxfbmlnd
 npx supabase functions delete verify-razorpay-payment --project-ref krrsrzekaxqfmxfbmlnd
 npx supabase functions delete get-order-payment-status --project-ref krrsrzekaxqfmxfbmlnd
+
+
+
+npx supabase secrets set RAZORPAY_KEY_ID="rzp_live_Trn0CrmXdsrxJD" RAZORPAY_KEY_SECRET="6XDrOp6FZ3W25XrSzBOz7UAY" --project-ref krrsrzekaxqfmxfbmlnd
