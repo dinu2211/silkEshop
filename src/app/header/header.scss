@@ -1,9 +1,5 @@
 :host {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  display: block;
   color: #30271f;
 }
 
@@ -128,12 +124,6 @@
 .cart-link:focus-visible {
   outline: 2px solid #9a7048;
   outline-offset: 4px;
-}
-
-.content {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 @media (max-width: 600px) {

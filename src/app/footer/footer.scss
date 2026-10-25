@@ -133,32 +133,18 @@
 
 @media (max-width: 700px) {
   .site-footer {
-    padding-top: 40px;
+    padding: 12px clamp(20px, 5vw, 76px);
   }
 
   .footer-main {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px 24px;
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 420px) {
-  .footer-main {
-    grid-template-columns: 1fr;
-    gap: 26px;
-  }
-
-  .footer-brand {
-    grid-column: auto;
+    display: none;
   }
 
   .footer-bottom {
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
+    padding-top: 0;
+    border-top: 0;
   }
 }
 
