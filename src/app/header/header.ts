@@ -8,6 +8,7 @@ import { MatNavList } from '@angular/material/list';
 import { MatMenu, MatMenuTrigger } from '@angular/material/menu';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { CartService } from '../cart-service';
@@ -16,7 +17,7 @@ import { ViewCart } from '../view-cart/view-cart';
 @Component({
   selector: 'app-header',
   imports: [MatSidenavContainer,MatSidenav,AsyncPipe,MatToolbar,MatNavList,MatSidenavContent,MatIcon
-    ,MatMenu,MatMenuTrigger,CommonModule,MatBadge,MatButton,ViewCart
+    ,MatMenu,MatMenuTrigger,CommonModule,MatBadge,MatButton,RouterLink,RouterLinkActive,ViewCart
   ],
   templateUrl: './header.html',
   styleUrl: './header.scss',

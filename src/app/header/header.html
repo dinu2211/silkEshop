@@ -97,48 +97,38 @@
   </mat-sidenav-content>
 </mat-sidenav-container> -->
 
-<style>
-  @media (max-width: 600px) {
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: nowrap;
-    }
+<header class="header">
+  <a routerLink="/" class="logo" aria-label="Silk Eshop home">
+    <span class="logo-mark" aria-hidden="true">S</span>
+    <span class="logo-name">Silk<span class="logo-accent"> Eshop</span></span>
+  </a>
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      flex-wrap: nowrap;
-    }
+  <nav class="header-nav" aria-label="Main navigation">
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+    >Home</a>
+    <a routerLink="/contact" routerLinkActive="active" ariaCurrentWhenActive="page">Contact</a>
+    <a routerLink="/about" routerLinkActive="active" ariaCurrentWhenActive="page">About</a>
+  </nav>
 
-    .header-right > a:not(.cart-link) {
-      display: none;
-    }
-  }
-</style>
-
-<div class="header">
-  <a href="#default" class="logo">CompanyLogo</a>
-  <div class="header-right">
-    <a class="active" href="#home">Home</a>
-    <a href="#contact">Contact</a>
-    <a href="#about">About</a>
-    <button
-      class="cart-link"
-      type="button"
-      aria-label="Open cart"
-      [attr.aria-expanded]="isCartOpen"
-      (click)="isCartOpen = true"
-    >
-      <mat-icon
-        [matBadge]="cartService.itemCount()"
-        [matBadgeHidden]="cartService.itemCount() === 0"
-        matBadgeColor="warn"
-      >shopping_cart</mat-icon>
-    </button>
-  </div>
-</div>
+  <button
+    class="cart-link"
+    type="button"
+    aria-label="Open cart"
+    [attr.aria-expanded]="isCartOpen"
+    (click)="isCartOpen = true"
+  >
+    <mat-icon
+      [matBadge]="cartService.itemCount()"
+      [matBadgeHidden]="cartService.itemCount() === 0"
+      matBadgeColor="warn"
+    >shopping_bag</mat-icon>
+    <span class="cart-label">Cart</span>
+  </button>
+</header>
 
 <main class="content">
   <ng-content></ng-content>

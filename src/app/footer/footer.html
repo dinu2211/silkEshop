@@ -1,1 +1,31 @@
-<p>footer works!</p>
+<footer class="site-footer">
+  <div class="footer-main">
+    <section class="footer-brand" aria-label="About Silk Eshop">
+      <a class="brand" routerLink="/" aria-label="Silk Eshop home">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span class="brand-name">Silk<span> Eshop</span></span>
+      </a>
+      <p>Everyday finds, thoughtfully chosen. A little something lovely for every day.</p>
+    </section>
+
+    <nav class="footer-navigation" aria-label="Footer navigation">
+      <h2>Explore</h2>
+      <a routerLink="/">Home</a>
+      <a routerLink="/contact">Contact</a>
+    </nav>
+
+    <section class="footer-help" aria-labelledby="footer-help-title">
+      <h2 id="footer-help-title">Need a hand?</h2>
+      <p>Questions about an order? We're happy to help.</p>
+      <a class="contact-link" routerLink="/contact">
+        Get in touch
+        <span aria-hidden="true">&rarr;</span>
+      </a>
+    </section>
+  </div>
+
+  <div class="footer-bottom">
+    <p>&copy; {{ currentYear }} Silk Eshop. All rights reserved.</p>
+    <span>Made for everyday living</span>
+  </div>
+</footer>

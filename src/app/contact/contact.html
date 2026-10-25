@@ -1,0 +1,60 @@
+<main class="contact-page">
+  <section class="contact-hero" aria-labelledby="contact-title">
+    <div class="hero-copy">
+      <span class="eyebrow">We'd love to hear from you</span>
+      <h1 id="contact-title">Get in touch</h1>
+      <p>Visit us or give us a call. We're here to help.</p>
+    </div>
+
+    <div class="image-carousel" role="group" aria-label="Scenes from our work">
+      @for (image of images; track image.src; let index = $index) {
+        <img
+          class="carousel-image"
+          [src]="image.src"
+          [alt]="image.alt"
+          [style.animation-delay]="index * 5 + 's'"
+          [attr.fetchpriority]="index === 0 ? 'high' : null"
+        />
+      }
+      <span class="image-caption">Made with care, together</span>
+    </div>
+  </section>
+
+  <section class="contact-details" aria-label="Contact details">
+    <article class="detail-card">
+      <span class="detail-icon" aria-hidden="true">⌖</span>
+      <div>
+        <h2>Visit us</h2>
+        <address>
+          20, XXX, YYY,<br />
+          ABC, Country - 112255
+        </address>
+      </div>
+    </article>
+
+    <article class="detail-card">
+      <span class="detail-icon phone-icon" aria-hidden="true">☎</span>
+      <div>
+        <h2>Call us</h2>
+        <a class="phone-number" href="tel:+91999999999">+91 999999999</a>
+        <p class="detail-note">We look forward to speaking with you.</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="map-section" aria-labelledby="map-title">
+    <div class="section-heading">
+      <span class="eyebrow">Find us</span>
+      <h2 id="map-title">Come by for a visit</h2>
+    </div>
+    <div class="map-frame">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3544.206427557023!2d77.03689287451994!3d11.002890654976756!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ba857117ea6aaab%3A0x7af60ad8bb66d776!2sSss(Shanthi%20social%20services)!5e1!3m2!1sen!2sin!4v1792931019800!5m2!1sen!2sin"
+        title="Map showing SSS Shanthi Social Services"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </section>
+</main>

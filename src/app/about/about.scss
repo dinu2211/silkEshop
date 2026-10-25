@@ -1,0 +1,274 @@
+:host {
+  display: block;
+  color: #30271f;
+}
+
+.about-page {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(36px, 6vw, 76px) 0 80px;
+}
+
+.about-hero {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  align-items: center;
+  gap: clamp(36px, 7vw, 88px);
+}
+
+.hero-copy {
+  padding: 16px 0;
+}
+
+.eyebrow {
+  color: #9a7048;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-copy h1,
+.story-copy h2,
+.section-heading h2,
+.about-cta h2 {
+  color: #493729;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.hero-copy h1 {
+  margin: 14px 0 18px;
+  font-size: clamp(42px, 5.4vw, 64px);
+  line-height: 1.08;
+}
+
+.hero-copy h1 span {
+  color: #9a7048;
+  font-style: italic;
+}
+
+.hero-copy p,
+.story-copy p {
+  color: #786e64;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.hero-copy p {
+  max-width: 420px;
+  margin: 0 0 24px;
+}
+
+.text-link,
+.cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #805a36;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.text-link:hover,
+.cta-link:hover {
+  color: #493729;
+}
+
+.text-link:focus-visible,
+.cta-link:focus-visible {
+  outline: 2px solid #9a7048;
+  outline-offset: 5px;
+}
+
+.hero-image {
+  position: relative;
+  height: clamp(300px, 40vw, 470px);
+  margin: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #eee8df;
+  box-shadow: 0 18px 45px rgba(48, 39, 31, 0.13);
+}
+
+.hero-image::after {
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(transparent, rgba(32, 25, 19, 0.55));
+  content: '';
+}
+
+.hero-image img,
+.story-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-image figcaption {
+  position: absolute;
+  right: 22px;
+  bottom: 20px;
+  left: 22px;
+  z-index: 1;
+  color: #fffdf9;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+}
+
+.story-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: clamp(36px, 7vw, 88px);
+  margin-top: clamp(72px, 10vw, 120px);
+}
+
+.story-image {
+  height: clamp(280px, 34vw, 390px);
+  overflow: hidden;
+  border-radius: 14px;
+  background: #f4ecdf;
+}
+
+.story-copy h2,
+.section-heading h2 {
+  margin: 12px 0 16px;
+  font-size: clamp(30px, 3.6vw, 42px);
+  line-height: 1.15;
+}
+
+.story-copy p {
+  margin: 0 0 14px;
+}
+
+.values-section {
+  margin-top: clamp(72px, 10vw, 120px);
+}
+
+.section-heading {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+}
+
+.value-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.value-card {
+  min-height: 205px;
+  padding: 26px;
+  border: 1px solid #eee8df;
+  border-radius: 12px;
+  background: #fffdf9;
+}
+
+.value-number {
+  color: #b38a5e;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  font-style: italic;
+}
+
+.value-card h3 {
+  margin: 22px 0 9px;
+  color: #493729;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.value-card p {
+  margin: 0;
+  color: #786e64;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.about-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: clamp(64px, 9vw, 100px);
+  padding: clamp(26px, 5vw, 48px);
+  border-radius: 14px;
+  background: #f4ecdf;
+}
+
+.about-cta h2 {
+  max-width: 600px;
+  margin: 10px 0 0;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.2;
+}
+
+.cta-link {
+  flex: 0 0 auto;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 24px;
+  background: #493729;
+  color: #fffdf9;
+}
+
+.cta-link:hover {
+  background: #634a36;
+  color: #fffdf9;
+}
+
+@media (max-width: 720px) {
+  .about-hero,
+  .story-section {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  .hero-copy {
+    padding: 0;
+  }
+
+  .story-image {
+    order: 1;
+    height: clamp(240px, 60vw, 360px);
+  }
+
+  .story-copy {
+    order: 0;
+  }
+
+  .value-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .value-card {
+    min-height: 0;
+  }
+
+  .value-card h3 {
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 520px) {
+  .about-page {
+    width: min(100% - 32px, 420px);
+    padding-top: 36px;
+  }
+
+  .about-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
