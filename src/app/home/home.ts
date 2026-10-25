@@ -1,9 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card'; 
 import { Search } from '../search/search';
 import { CommonModule } from '@angular/common';
-import { CartService, Product } from '../cart-service';
+import { Product } from '../cart-service';
 import { ProductDetails } from '../product-details/product-details';
+import { Supabase } from '../services/supabase';
 
 @Component({
   selector: 'app-home',
@@ -12,8 +14,18 @@ import { ProductDetails } from '../product-details/product-details';
   styleUrl: './home.scss',
 })
 export class Home {
-  readonly cartService = inject(CartService);
-  readonly products = this.cartService.products;
+  private readonly supabase = inject(Supabase);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  readonly products = signal<Product[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+
+  constructor() {
+    if (this.isBrowser) {
+      void this.loadProducts();
+    }
+  }
 
   selectedCategory: string | null = null;
   selectedProduct: Product | null = null;
@@ -39,5 +51,19 @@ export class Home {
 
   closeProductDetails(): void {
     this.selectedProduct = null;
+  }
+
+  async loadProducts(): Promise<void> {
+    this.loading.set(true);
+    this.error.set(null);
+
+    try {
+      this.products.set(await this.supabase.getProducts());
+    } catch (error: unknown) {
+      console.error('Failed to load products from Supabase.', error);
+      this.error.set('Unable to load products. Please try again.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 }

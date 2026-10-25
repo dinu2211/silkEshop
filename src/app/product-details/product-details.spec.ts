@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import {
   CartService,
@@ -12,15 +14,28 @@ import { ProductDetails } from './product-details';
 describe('ProductDetails', () => {
   let component: ProductDetails;
   let fixture: ComponentFixture<ProductDetails>;
+  let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProductDetails]
+      imports: [ProductDetails],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     })
     .compileComponents();
 
+    httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ProductDetails);
     component = fixture.componentInstance;
+    httpTesting.expectOne('/api/products').flush([
+      {
+        id: 'silk-dhoti-set-01',
+        name: 'Silk Dhoti Set',
+        description: 'Traditional silk dhoti set.',
+        price: 3499,
+        imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+        category: ProductCategory.SilkDhotiSet,
+      },
+    ]);
     component.product = TestBed.inject(CartService).products()[0];
     fixture.detectChanges();
   });
@@ -31,7 +46,7 @@ describe('ProductDetails', () => {
 
   it('shows product information and lets the user configure the quantity and clothing options', () => {
     const product = TestBed.inject(CartService).products().find(
-      (item) => item.category === ProductCategory.ComboSet,
+      (item) => item.category === ProductCategory.SilkDhotiSet,
     )!;
     component.product = product;
     fixture.detectChanges();
@@ -57,7 +72,7 @@ describe('ProductDetails', () => {
   it('adds the selected options and quantity to the cart', () => {
     const cartService = TestBed.inject(CartService);
     const product = cartService.products().find(
-      (item) => item.category === ProductCategory.ComboSet,
+      (item) => item.category === ProductCategory.SilkDhotiSet,
     )!;
     component.product = product;
     component.dhotiSize = DhotiSize.TenMulam;
@@ -81,5 +96,9 @@ describe('ProductDetails', () => {
     component.decreaseQuantity();
 
     expect(component.quantity).toBe(1);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
   });
 });

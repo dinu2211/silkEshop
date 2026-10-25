@@ -1,19 +1,50 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
+import { Product, ProductCategory } from '../cart-service';
+import { ProductService } from '../product-service';
+import { Supabase } from '../services/supabase';
 
 import { Home } from './home';
 
 describe('Home', () => {
   let component: Home;
   let fixture: ComponentFixture<Home>;
+  let supabase: jasmine.SpyObj<Supabase>;
+  const products: Product[] = [
+    {
+      id: 'silk-dhoti-01',
+      name: 'Kanchipuram Silk Dhoti - Gold Zari Border',
+      description: 'Traditional cream silk dhoti with an elegant gold zari border.',
+      price: 3499,
+      imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+      category: ProductCategory.SilkDhoti,
+    },
+    {
+      id: 'plain-dhoti-01',
+      name: 'Cotton Dhoti - White with Gold Border',
+      description: 'Breathable white cotton dhoti with a simple gold-tone border.',
+      price: 799,
+      imageUrl: 'assets/images/silk-dhoti-16.jpeg',
+      category: ProductCategory.PlainDhoti,
+    },
+  ];
 
   beforeEach(async () => {
+    supabase = jasmine.createSpyObj<Supabase>('Supabase', ['getProducts']);
+    supabase.getProducts.and.resolveTo(products);
+
     await TestBed.configureTestingModule({
-      imports: [Home]
+      imports: [Home],
+      providers: [
+        { provide: Supabase, useValue: supabase },
+        { provide: ProductService, useValue: { products: signal(products) } },
+      ],
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(Home);
     component = fixture.componentInstance;
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -45,6 +76,11 @@ describe('Home', () => {
     );
   });
 
+  it('loads products from Supabase', () => {
+    expect(supabase.getProducts).toHaveBeenCalled();
+    expect(component.products()).toEqual(products);
+  });
+
   it('opens the product details dialog from a product card', () => {
     const product = component.products()[0];
 
@@ -60,4 +96,5 @@ describe('Home', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
   });
+
 });

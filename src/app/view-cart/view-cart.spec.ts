@@ -1,20 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
-import { CartService } from '../cart-service';
+import { CartService, Product, ProductCategory } from '../cart-service';
 import { ViewCart } from './view-cart';
 
 describe('ViewCart', () => {
   let component: ViewCart;
   let fixture: ComponentFixture<ViewCart>;
+  let httpTesting: HttpTestingController;
+  const products: Product[] = [
+    {
+      id: 'silk-dhoti-01',
+      name: 'Kanchipuram Silk Dhoti - Gold Zari Border',
+      description: 'Traditional cream silk dhoti with an elegant gold zari border.',
+      price: 3499,
+      imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+      category: ProductCategory.SilkDhoti,
+    },
+  ];
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ViewCart]
+      imports: [ViewCart],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     })
     .compileComponents();
 
+    httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ViewCart);
     component = fixture.componentInstance;
+    httpTesting.expectOne('/api/products').flush(products);
     fixture.detectChanges();
   });
 
@@ -51,5 +67,9 @@ describe('ViewCart', () => {
 
     expect(cartService.cartItems()).toHaveSize(0);
     expect(fixture.nativeElement.textContent).toContain('Your cart is empty');
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
   });
 });

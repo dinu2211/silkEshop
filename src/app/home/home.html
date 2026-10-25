@@ -34,6 +34,15 @@
       <p class="latest">LATEST PRODUCTS</p>
     </div>
   </div>
+  @if (loading() && products().length === 0) {
+    <p role="status">Loading products...</p>
+  }
+  @if (error(); as error) {
+    <div role="alert">
+      <p>{{ error }}</p>
+      <button type="button" (click)="loadProducts()">Try again</button>
+    </div>
+  }
   <div class="row">
     <div class="col-md-3 mb-3" *ngFor="let product of filteredProducts">
       <mat-card class="example-card">

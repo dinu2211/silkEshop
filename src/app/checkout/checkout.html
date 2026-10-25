@@ -8,7 +8,7 @@
     <header class="checkout-heading">
       <p class="eyebrow">YOUR ORDER, YOUR WAY</p>
       <h1>Checkout</h1>
-      <p class="heading-copy">A few details and your handpicked pieces are on their way.</p>
+      <p class="heading-copy">A few details, then pay securely to confirm your order.</p>
 
       <ol class="checkout-progress" aria-label="Checkout progress">
         <li class="progress-step active">
@@ -18,7 +18,7 @@
         <li class="progress-line" aria-hidden="true"></li>
         <li class="progress-step">
           <span>2</span>
-          <span>Confirm on WhatsApp</span>
+          <span>Secure payment</span>
         </li>
       </ol>
     </header>
@@ -33,7 +33,7 @@
     } @else {
       <form
         #shippingForm="ngForm"
-        (ngSubmit)="sendOrderToWhatsApp(shippingForm)"
+        (ngSubmit)="startPayment(shippingForm)"
         class="checkout-layout"
       >
         <section class="shipping-card" aria-labelledby="shipping-title">
@@ -41,7 +41,7 @@
             <span class="section-number">01</span>
             <div>
               <h2 id="shipping-title">Where should we send it?</h2>
-              <p>Your details are shared with the shop only when you continue to WhatsApp.</p>
+              <p>Your delivery details will be saved with your order before payment.</p>
             </div>
           </div>
 
@@ -197,29 +197,39 @@
             </div>
             <div>
               <span>Shipping</span>
-              <span class="shipping-pending">Confirmed on WhatsApp</span>
+              <span>{{ shippingFee | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
             </div>
           </div>
 
           <div class="order-total">
-            <span>Order subtotal</span>
-            <strong>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            <span>Total due</span>
+            <strong>{{ cartService.totalPrice() + shippingFee | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
           </div>
-          <p class="shipping-note">The shop will confirm delivery charges and your final total in WhatsApp.</p>
+          <p class="shipping-note">Includes a fixed ₹100 delivery fee. Payment is securely processed by Razorpay.</p>
 
           @if (shippingForm.submitted && shippingForm.invalid) {
             <p class="form-error" role="alert">Please complete the required fields with valid details.</p>
           }
-
-          <button class="whatsapp-button" type="submit">
-            <span class="whatsapp-mark" aria-hidden="true">WA</span>
-            <span>Continue to WhatsApp</span>
+          @if (submissionError) {
+            <p class="form-error" role="alert">{{ submissionError }}</p>
+          }
+          <button class="payment-button" type="submit" [disabled]="isSubmitting">
+            <mat-icon aria-hidden="true">lock</mat-icon>
+            <span>
+              @if (isSubmitting && !submissionError) {
+                Processing...
+              } @else if (unverifiedPayment) {
+                Retry payment verification
+              } @else {
+                Pay securely with Razorpay
+              }
+            </span>
             <mat-icon aria-hidden="true">arrow_forward</mat-icon>
           </button>
 
           <p class="payment-note">
-            <mat-icon aria-hidden="true">lock</mat-icon>
-            No payment is collected on this page. Confirm your order and payment options directly with us.
+            <mat-icon aria-hidden="true">verified_user</mat-icon>
+            Your payment is verified by our server before the order is confirmed.
           </p>
         </aside>
       </form>

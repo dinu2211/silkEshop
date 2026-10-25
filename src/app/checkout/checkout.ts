@@ -1,20 +1,20 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { FormsModule, type NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../cart-service';
+import {
+  Supabase,
+  type OrderCustomer,
+  type RazorpayPaymentResponse,
+} from '../services/supabase';
 
-interface ShippingDetails {
-  fullName: string;
-  phone: string;
-  email: string;
-  address: string;
-  apartment: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  note: string;
+interface CheckoutForm {
+  invalid: boolean | null;
+  form: {
+    markAllAsTouched(): void;
+  };
 }
 
 @Component({
@@ -25,7 +25,10 @@ interface ShippingDetails {
 })
 export class Checkout {
   readonly cartService = inject(CartService);
-  readonly shippingDetails: ShippingDetails = {
+  private readonly supabase = inject(Supabase);
+  private readonly router = inject(Router);
+  readonly shippingFee = 1;
+  readonly shippingDetails: OrderCustomer = {
     fullName: '',
     phone: '',
     email: '',
@@ -37,51 +40,138 @@ export class Checkout {
     note: '',
   };
 
-  private readonly whatsappNumber = '917418758951';
+  isSubmitting = false;
+  submissionError = '';
+  private orderId: string | null = null;
+  unverifiedPayment: RazorpayPaymentResponse | null = null;
+  private razorpayScript: Promise<void> | null = null;
 
-  sendOrderToWhatsApp(form: NgForm): void {
+  async startPayment(form: CheckoutForm): Promise<void> {
     if (form.invalid || this.cartService.cartItems().length === 0) {
       form.form.markAllAsTouched();
       return;
     }
 
-    const items = this.cartService
-      .cartItems()
-      .map((item) => {
-        const options = [
-          item.dhotiSize ? `Dhoti: ${item.dhotiSize}` : '',
-          item.shirtSize ? `Shirt: ${item.shirtSize}` : '',
-          item.sleeveLength ?? '',
-        ]
-          .filter(Boolean)
-          .join(', ');
-        return `• ${item.name}${options ? ` (${options})` : ''} x ${item.quantity} — ₹${item.price * item.quantity}`;
-      })
-      .join('\n');
-    const { fullName, phone, email, address, apartment, city, state, postalCode, note } =
-      this.shippingDetails;
-    const message = [
-      'Hello! I would like to place this order:',
-      '',
-      items,
-      '',
-      `Order subtotal: ₹${this.cartService.totalPrice()}`,
-      'Shipping: Please confirm',
-      '',
-      'Shipping details:',
-      `Name: ${fullName}`,
-      `Phone: +91 ${phone}`,
-      ...(email ? [`Email: ${email}`] : []),
-      `Address: ${[address, apartment, city, state, postalCode, 'India'].filter(Boolean).join(', ')}`,
-      ...(note ? [`Delivery note: ${note}`] : []),
-      '',
-      'Please confirm the final amount and share the payment options.',
-    ].join('\n');
+    this.isSubmitting = true;
+    this.submissionError = '';
+    try {
+      if (this.unverifiedPayment && this.orderId) {
+        await this.verifyPayment(this.unverifiedPayment, this.orderId);
+        return;
+      }
 
-    window.open(
-      `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(message)}`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+      if (!this.orderId) {
+        this.orderId = await this.supabase.createOrder(
+          { ...this.shippingDetails },
+          this.cartService.cartItems(),
+        );
+      }
+
+      const orderId = this.orderId;
+      if (!orderId) {
+        throw new Error('Order creation did not return an order ID.');
+      }
+      const paymentOrder = await this.supabase.createPaymentOrder(orderId);
+      await this.loadRazorpay();
+
+      const checkout = new window.Razorpay({
+        key: paymentOrder.keyId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: 'Silk Eshop',
+        description: 'Order payment',
+        order_id: paymentOrder.razorpayOrderId,
+        prefill: {
+          name: this.shippingDetails.fullName,
+          email: this.shippingDetails.email,
+          contact: this.shippingDetails.phone,
+        },
+        theme: { color: '#817044' },
+        handler: (response) => {
+          void this.verifyPayment(response, orderId);
+        },
+        modal: {
+          ondismiss: () => {
+            this.isSubmitting = false;
+          },
+        },
+      });
+      checkout.on('payment.failed', (response) => {
+        this.submissionError = response.error.description || 'Payment failed. Please try again.';
+        this.isSubmitting = false;
+      });
+      checkout.open();
+    } catch (error) {
+      console.error('Failed to start Razorpay checkout.', error);
+      this.submissionError = 'We could not start your payment. Please try again.';
+      this.isSubmitting = false;
+    }
+  }
+
+  private async verifyPayment(
+    response: RazorpayPaymentResponse,
+    orderId: string,
+  ): Promise<void> {
+    this.isSubmitting = true;
+    this.unverifiedPayment = response;
+    this.submissionError = '';
+    try {
+      await this.supabase.verifyPayment(orderId, response);
+      this.unverifiedPayment = null;
+      this.cartService.clear();
+      await this.router.navigate(['/confirmation', orderId]);
+    } catch (error) {
+      console.error('Razorpay payment verification failed.', error);
+      this.submissionError =
+        'Payment was submitted, but we could not verify it yet. Do not pay again; retry verification below.';
+      this.isSubmitting = false;
+    }
+  }
+
+  private loadRazorpay(): Promise<void> {
+    if (window.Razorpay) {
+      return Promise.resolve();
+    }
+
+    if (!this.razorpayScript) {
+      this.razorpayScript = new Promise<void>((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => {
+          this.razorpayScript = null;
+          reject(new Error('Razorpay checkout could not be loaded.'));
+        };
+        document.head.appendChild(script);
+      });
+    }
+
+    return this.razorpayScript;
   }
 }
+
+interface RazorpayOptions {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  prefill: { name: string; email: string; contact: string };
+  theme: { color: string };
+  handler: (response: RazorpayPaymentResponse) => void;
+  modal: { ondismiss: () => void };
+}
+
+interface RazorpayCheckout {
+  open(): void;
+  on(event: 'payment.failed', handler: (response: { error: { description?: string } }) => void): void;
+}
+
+declare global {
+  interface Window {
+    Razorpay: new (options: RazorpayOptions) => RazorpayCheckout;
+  }
+}
+// 50vi2ogn73qYAbe4

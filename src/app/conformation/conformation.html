@@ -1,0 +1,70 @@
+<main class="confirmation-page">
+  <section class="confirmation-card" aria-labelledby="confirmation-title">
+    @if (isLoading) {
+      <span class="confirmation-icon pending">
+        <mat-icon aria-hidden="true">hourglass_top</mat-icon>
+      </span>
+      <p class="eyebrow">ORDER UPDATE</p>
+      <h1 id="confirmation-title">Checking your order</h1>
+      <p class="confirmation-copy">We’re retrieving the latest payment status.</p>
+    } @else if (errorMessage) {
+      <span class="confirmation-icon pending">
+        <mat-icon aria-hidden="true">info</mat-icon>
+      </span>
+      <p class="eyebrow">ORDER UPDATE</p>
+      <h1 id="confirmation-title">We couldn’t load your order</h1>
+      <p class="confirmation-copy" role="alert">{{ errorMessage }}</p>
+      <button class="confirmation-action" type="button" (click)="loadOrder()">Try again</button>
+    } @else if (order; as currentOrder) {
+      @if (currentOrder.paymentStatus === 'paid') {
+        <span class="confirmation-icon success">
+          <mat-icon aria-hidden="true">check</mat-icon>
+        </span>
+        <p class="eyebrow">PAYMENT RECEIVED</p>
+        <h1 id="confirmation-title">Thank you for your order</h1>
+        <p class="confirmation-copy">Your payment was verified and your order is confirmed.</p>
+      } @else if (currentOrder.status === 'cancelled') {
+        <span class="confirmation-icon pending">
+          <mat-icon aria-hidden="true">close</mat-icon>
+        </span>
+        <p class="eyebrow">ORDER UPDATE</p>
+        <h1 id="confirmation-title">This order was cancelled</h1>
+        <p class="confirmation-copy">Please contact the shop if you need help with this order.</p>
+      } @else {
+        <span class="confirmation-icon pending">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+        </span>
+        <p class="eyebrow">PAYMENT PENDING</p>
+        <h1 id="confirmation-title">Your order is not confirmed yet</h1>
+        <p class="confirmation-copy">We’ll show confirmation here after your payment is verified.</p>
+      }
+
+      <dl class="order-details">
+        <div>
+          <dt>Order number</dt>
+          <dd>{{ currentOrder.id }}</dd>
+        </div>
+        <div>
+          <dt>Order status</dt>
+          <dd>{{ currentOrder.status | titlecase }}</dd>
+        </div>
+        <div>
+          <dt>Payment status</dt>
+          <dd>{{ currentOrder.paymentStatus | titlecase }}</dd>
+        </div>
+        <div>
+          <dt>Total paid</dt>
+          <dd>{{ currentOrder.total | currency: 'INR' : 'symbol' : '1.0-0' }}</dd>
+        </div>
+        @if (currentOrder.paymentId) {
+          <div>
+            <dt>Payment reference</dt>
+            <dd>{{ currentOrder.paymentId }}</dd>
+          </div>
+        }
+      </dl>
+
+      <a class="confirmation-action" routerLink="/">Continue shopping</a>
+    }
+  </section>
+</main>

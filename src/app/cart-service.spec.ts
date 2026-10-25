@@ -1,33 +1,38 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
-import { CartService, DhotiSize, ProductCategory } from './cart-service';
+import { CartService, DhotiSize, Product, ProductCategory } from './cart-service';
 
 describe('CartService', () => {
   let service: CartService;
+  let httpTesting: HttpTestingController;
+  const products: Product[] = [
+    {
+      id: 'silk-dhoti-01',
+      name: 'Kanchipuram Silk Dhoti - Gold Zari Border',
+      description: 'Traditional cream silk dhoti with an elegant gold zari border.',
+      price: 3499,
+      imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+      category: ProductCategory.SilkDhoti,
+    },
+  ];
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    httpTesting = TestBed.inject(HttpTestingController);
     service = TestBed.inject(CartService);
+    httpTesting.expectOne('/api/products').flush(products);
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  it('provides 15 silk dhotis, 10 regular dhotis, and 5 combo sets', () => {
-    const products = service.products();
-
-    expect(products).toHaveSize(30);
-    expect(products.filter((product) => product.category === ProductCategory.SilkDhoti))
-      .toHaveSize(15);
-    expect(products.filter((product) => product.category === ProductCategory.PlainDhoti))
-      .toHaveSize(10);
-    expect(products.filter((product) => product.category === ProductCategory.ComboSet))
-      .toHaveSize(5);
-    expect(new Set(products.map((product) => product.id)).size).toBe(products.length);
-    expect(products.every((product) => product.name && product.description && product.price > 0))
-      .toBeTrue();
-    expect(products.every((product) => product.imageUrl?.startsWith('https://'))).toBeTrue();
+  it('uses products returned by the products API', () => {
+    expect(service.products()).toEqual(products);
   });
 
   it('updates the displayed quantity when a product is increased or decreased', () => {
@@ -67,5 +72,9 @@ describe('CartService', () => {
     service.removeFromCart(largerSize.variantKey!);
     expect(service.cartItems()).toHaveSize(1);
     expect(service.cartItems()[0].dhotiSize).toBe(DhotiSize.EightMulam);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
   });
 });

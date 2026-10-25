@@ -1,0 +1,10 @@
+project_id = "krrsrzekaxqfmxfbmlnd"
+
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.verify-razorpay-payment]
+verify_jwt = false
+
+[functions.get-order-payment-status]
+verify_jwt = false
