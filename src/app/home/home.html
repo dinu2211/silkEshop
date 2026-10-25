@@ -1,9 +1,15 @@
 <div class="container spacecontainer">
   <!-- <app-search></app-search> -->
-  <div class="row category">
-    <div
-      class="col-md-2 mb-3 offset-0.8 categoryCard"
-    >
+  <details class="category-section">
+    <summary class="category-toggle">
+      <span class="category-heading">
+        <span class="category-eyebrow">Find your style</span>
+        <span class="category-title" id="category-heading">Shop by category</span>
+      </span>
+      <span class="category-current">{{ selectedCategory ?? 'All categories' }}</span>
+      <span class="category-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="category-panel" role="group" aria-labelledby="category-heading">
       <button
         type="button"
         class="categoryButton"
@@ -13,12 +19,8 @@
       >
         All categories
       </button>
-    </div>
-    <div
-      class="col-md-2 mb-3 offset-0.8 categoryCard"
-      *ngFor="let category of categories"
-    >
       <button
+        *ngFor="let category of categories"
         type="button"
         class="categoryButton"
         [class.selected]="selectedCategory === category"
@@ -28,7 +30,7 @@
         {{ category }}
       </button>
     </div>
-  </div>
+  </details>
   <div class="row">
     <div class="col">
       <p class="latest">LATEST PRODUCTS</p>
