@@ -70,6 +70,10 @@
   align-items: flex-start;
 }
 
+.footer-mobile-navigation {
+  display: none;
+}
+
 .footer-navigation h2,
 .footer-help h2 {
   margin: 5px 0 15px;
@@ -126,6 +130,7 @@
 
 .brand:focus-visible,
 .footer-navigation a:focus-visible,
+.footer-mobile-navigation a:focus-visible,
 .contact-link:focus-visible {
   outline: 2px solid #f0d1a3;
   outline-offset: 4px;
@@ -138,6 +143,24 @@
 
   .footer-main {
     display: none;
+  }
+
+  .footer-mobile-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding-bottom: 12px;
+  }
+
+  .footer-mobile-navigation a {
+    color: #c8bdb0;
+    font-size: 14px;
+    line-height: 2;
+    text-decoration: none;
+  }
+
+  .footer-mobile-navigation a:hover {
+    color: #f8e8c4;
   }
 
   .footer-bottom {

@@ -25,11 +25,28 @@ describe('Footer', () => {
 
   it('should render the footer navigation', () => {
     const footer = fixture.nativeElement.querySelector('footer');
-    const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>('nav a');
+    const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>('.footer-navigation a');
 
     expect(footer).toBeTruthy();
     expect(links.length).toBe(2);
     expect(links[0].textContent?.trim()).toBe('Home');
     expect(links[1].textContent?.trim()).toBe('Contact');
+  });
+
+  it('should render mobile navigation links for home, about, and contact', () => {
+    const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>(
+      '.footer-mobile-navigation a',
+    );
+
+    expect(Array.from(links).map(link => link.textContent?.trim())).toEqual([
+      'Home',
+      'About',
+      'Contact',
+    ]);
+    expect(Array.from(links).map(link => link.getAttribute('href'))).toEqual([
+      '/',
+      '/about',
+      '/contact',
+    ]);
   });
 });
