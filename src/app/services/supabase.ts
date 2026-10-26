@@ -50,6 +50,113 @@ export interface OrderPaymentStatus {
   paymentId: string | null;
 }
 
+export interface OrderTrackingItem {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  dhotiSize: string | null;
+  shirtSize: string | null;
+  sleeveLength: string | null;
+}
+
+export type OrderTrackingStatus =
+  | OrderPaymentStatus['status']
+  | 'processing'
+  | 'shipped'
+  | 'out_for_delivery';
+
+export interface OrderTrackingEvent {
+  id: string;
+  status: OrderTrackingStatus;
+  title: string;
+  description: string | null;
+  location: string | null;
+  createdAt: string;
+}
+
+export interface OrderTrackingDetails {
+  id: string;
+  status: OrderTrackingStatus;
+  paymentStatus: OrderPaymentStatus['paymentStatus'];
+  createdAt: string;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  items: OrderTrackingItem[];
+  events: OrderTrackingEvent[];
+}
+
+const trackingStatuses: readonly string[] = [
+  'pending',
+  'confirmed',
+  'cancelled',
+  'fulfilled',
+  'processing',
+  'shipped',
+  'out_for_delivery',
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function isOrderTrackingItem(value: unknown): value is OrderTrackingItem {
+  return (
+    isRecord(value) &&
+    typeof value['productName'] === 'string' &&
+    typeof value['quantity'] === 'number' &&
+    Number.isFinite(value['quantity']) &&
+    typeof value['unitPrice'] === 'number' &&
+    Number.isFinite(value['unitPrice']) &&
+    typeof value['lineTotal'] === 'number' &&
+    Number.isFinite(value['lineTotal']) &&
+    isNullableString(value['dhotiSize']) &&
+    isNullableString(value['shirtSize']) &&
+    isNullableString(value['sleeveLength'])
+  );
+}
+
+function isOrderTrackingEvent(value: unknown): value is OrderTrackingEvent {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['status'] === 'string' &&
+    trackingStatuses.includes(value['status']) &&
+    typeof value['title'] === 'string' &&
+    isNullableString(value['description']) &&
+    isNullableString(value['location']) &&
+    typeof value['createdAt'] === 'string'
+  );
+}
+
+function isOrderTrackingDetails(value: unknown): value is OrderTrackingDetails {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['status'] === 'string' &&
+    trackingStatuses.includes(value['status']) &&
+    (value['paymentStatus'] === 'pending' ||
+      value['paymentStatus'] === 'paid' ||
+      value['paymentStatus'] === 'failed') &&
+    typeof value['createdAt'] === 'string' &&
+    typeof value['subtotal'] === 'number' &&
+    Number.isFinite(value['subtotal']) &&
+    typeof value['shippingFee'] === 'number' &&
+    Number.isFinite(value['shippingFee']) &&
+    typeof value['total'] === 'number' &&
+    Number.isFinite(value['total']) &&
+    Array.isArray(value['items']) &&
+    value['items'].every(isOrderTrackingItem) &&
+    Array.isArray(value['events']) &&
+    value['events'].every(isOrderTrackingEvent)
+  );
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -150,6 +257,27 @@ export class Supabase {
 
     if (!data) {
       throw new Error('Order status lookup did not return an order.');
+    }
+
+    return data;
+  }
+
+  async getOrderTrackingDetails(
+    orderId: string,
+    phone: string,
+  ): Promise<OrderTrackingDetails[]> {
+    const { data, error } = await this.client
+      .rpc('get_order_tracking_details', {
+        order_id_input: orderId.trim() || null,
+        phone_input: phone.trim() || null,
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isOrderTrackingDetails)) {
+      throw new Error('Order tracking lookup did not return valid order details.');
     }
 
     return data;

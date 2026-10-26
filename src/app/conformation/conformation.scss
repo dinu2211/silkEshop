@@ -114,8 +114,25 @@ h1 {
   text-decoration: none;
 }
 
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.confirmation-action.secondary {
+  border: 1px solid #e7ded2;
+  background: #fffdf9;
+  color: #493729;
+}
+
 .confirmation-action:hover {
   background: #6b5b35;
+}
+
+.confirmation-action.secondary:hover {
+  background: #f8f2e9;
 }
 
 .confirmation-action:focus-visible {

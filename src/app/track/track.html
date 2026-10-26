@@ -1,0 +1,228 @@
+<main class="tracking-page">
+  <div class="tracking-shell">
+    <a class="back-link" routerLink="/">
+      <mat-icon aria-hidden="true">arrow_back</mat-icon>
+      Continue shopping
+    </a>
+
+    <header class="page-heading">
+      <p class="eyebrow">WEAVE MADE · ORDER CARE</p>
+      <h1>Track your order</h1>
+      <p>See where your handcrafted order is and follow each step on its way to you.</p>
+    </header>
+
+    <section class="lookup-card" aria-labelledby="lookup-title">
+      <div class="lookup-intro">
+        <span class="lookup-icon"><mat-icon aria-hidden="true">local_shipping</mat-icon></span>
+        <div>
+          <h2 id="lookup-title">Find your order</h2>
+          <p>Look up one order by its number, or find all orders with your checkout mobile number.</p>
+        </div>
+      </div>
+
+      <form class="lookup-form" (ngSubmit)="trackOrder()">
+        <label class="field">
+          <span>Order number <span class="optional-label">Optional</span></span>
+          <input
+            type="text"
+            name="orderId"
+            [(ngModel)]="orderId"
+            autocomplete="off"
+            placeholder="Paste your order number"
+          />
+        </label>
+        <label class="field">
+          <span>Mobile number <span class="optional-label">Optional</span></span>
+          <input
+            type="tel"
+            name="phone"
+            [(ngModel)]="phone"
+            (ngModelChange)="onPhoneChange($event)"
+            autocomplete="tel"
+            inputmode="numeric"
+            maxlength="10"
+            placeholder="Your checkout phone number"
+          />
+        </label>
+        <button class="track-button" type="submit" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner" aria-hidden="true"></span>
+            Looking up…
+          } @else {
+            <mat-icon aria-hidden="true">search</mat-icon>
+            Track order
+          }
+        </button>
+      </form>
+
+      @if (errorMessage) {
+        <p class="form-message error" role="alert">{{ errorMessage }}</p>
+      } @else if (notFound) {
+        <p class="form-message error" role="alert">
+          We couldn’t find any orders matching those details. Check the order number or checkout
+          mobile number and try again.
+        </p>
+      }
+    </section>
+
+    @if (orders.length > 0) {
+      <section class="tracking-results" aria-labelledby="tracking-title" aria-live="polite">
+        <div class="result-heading">
+          <div>
+            <p class="eyebrow">YOUR ORDERS</p>
+            <h2 id="tracking-title">
+              {{ orders.length }} {{ orders.length === 1 ? 'order' : 'orders' }} found
+            </h2>
+            @if (orders.length > 1) {
+              <p class="results-hint">Select an order to view its tracking details.</p>
+            }
+          </div>
+        </div>
+
+        <div class="order-accordions">
+          @for (currentOrder of orders; track currentOrder.id; let orderIndex = $index) {
+            <details class="order-accordion" [open]="orders.length === 1">
+              <summary>
+                <span class="accordion-order">
+                  <span class="accordion-title">Order {{ currentOrder.id }}</span>
+                  <span class="accordion-date">
+                    Placed {{ currentOrder.createdAt | date: 'd MMM y, h:mm a' }}
+                  </span>
+                </span>
+                <span class="accordion-status">
+                  <span
+                    class="status-pill"
+                    [class.cancelled]="currentOrder.status === 'cancelled'"
+                    [class.pending]="currentOrder.status === 'pending'"
+                  >{{ currentOrder.status | titlecase }}</span>
+                  <mat-icon aria-hidden="true">expand_more</mat-icon>
+                </span>
+              </summary>
+
+              <div class="accordion-content">
+                <div class="order-meta">
+                  <div>
+                    <span>Order number</span>
+                    <strong>{{ currentOrder.id }}</strong>
+                  </div>
+                  <div>
+                    <span>Placed on</span>
+                    <strong>{{ currentOrder.createdAt | date: 'd MMM y, h:mm a' }}</strong>
+                  </div>
+                  <div>
+                    <span>Payment</span>
+                    <strong>{{ currentOrder.paymentStatus | titlecase }}</strong>
+                  </div>
+                </div>
+
+                <div class="result-grid">
+                  <section
+                    class="detail-card timeline-card"
+                    [attr.aria-labelledby]="'timeline-title-' + orderIndex"
+                  >
+                    <div class="card-heading">
+                      <span class="section-icon"><mat-icon aria-hidden="true">route</mat-icon></span>
+                      <div>
+                        <h3 [id]="'timeline-title-' + orderIndex">Tracking history</h3>
+                        <p>Updates as your order makes its way to you</p>
+                      </div>
+                    </div>
+
+                    <ol class="timeline">
+                      @for (event of currentOrder.events; track event.id; let last = $last) {
+                        <li class="timeline-event" [class.last-event]="last">
+                          <span class="event-icon" [class.cancelled]="event.status === 'cancelled'">
+                            <mat-icon aria-hidden="true">{{ trackingIcon(event.status) }}</mat-icon>
+                          </span>
+                          <div class="event-copy">
+                            <div class="event-heading">
+                              <h4>{{ event.title }}</h4>
+                              <time [attr.datetime]="event.createdAt">
+                                {{ event.createdAt | date: 'd MMM, h:mm a' }}
+                              </time>
+                            </div>
+                            @if (event.description) {
+                              <p>{{ event.description }}</p>
+                            }
+                            @if (event.location) {
+                              <span class="event-location">
+                                <mat-icon aria-hidden="true">place</mat-icon>{{ event.location }}
+                              </span>
+                            }
+                          </div>
+                        </li>
+                      }
+                    </ol>
+                  </section>
+
+                  <aside
+                    class="detail-card summary-card"
+                    [attr.aria-labelledby]="'summary-title-' + orderIndex"
+                  >
+                    <div class="card-heading">
+                      <span class="section-icon">
+                        <mat-icon aria-hidden="true">receipt_long</mat-icon>
+                      </span>
+                      <div>
+                        <h3 [id]="'summary-title-' + orderIndex">Order summary</h3>
+                        <p>
+                          {{ currentOrder.items.length }}
+                          {{ currentOrder.items.length === 1 ? 'item' : 'items' }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <ul class="item-list">
+                      @for (item of currentOrder.items; track $index) {
+                        <li>
+                          <div>
+                            <strong>{{ item.productName }}</strong>
+                            <span>
+                              Qty {{ item.quantity }} ·
+                              {{ item.unitPrice | currency: 'INR' : 'symbol' : '1.0-0' }} each
+                            </span>
+                            @if (item.dhotiSize || item.shirtSize || item.sleeveLength) {
+                              <span class="item-options">
+                                {{ item.dhotiSize ? 'Dhoti ' + item.dhotiSize : '' }}
+                                {{ item.shirtSize ? 'Shirt ' + item.shirtSize : '' }}
+                                {{ item.sleeveLength ? 'Sleeve ' + item.sleeveLength : '' }}
+                              </span>
+                            }
+                          </div>
+                          <strong>
+                            {{ item.lineTotal | currency: 'INR' : 'symbol' : '1.0-0' }}
+                          </strong>
+                        </li>
+                      }
+                    </ul>
+
+                    <dl class="totals">
+                      <div>
+                        <dt>Subtotal</dt>
+                        <dd>
+                          {{ currentOrder.subtotal | currency: 'INR' : 'symbol' : '1.0-0' }}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Shipping</dt>
+                        <dd>
+                          {{ currentOrder.shippingFee | currency: 'INR' : 'symbol' : '1.0-0' }}
+                        </dd>
+                      </div>
+                      <div class="total-row">
+                        <dt>Total</dt>
+                        <dd>
+                          {{ currentOrder.total | currency: 'INR' : 'symbol' : '1.0-0' }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </aside>
+                </div>
+              </div>
+            </details>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</main>

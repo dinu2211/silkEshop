@@ -64,7 +64,14 @@
         }
       </dl>
 
-      <a class="confirmation-action" routerLink="/">Continue shopping</a>
+      <div class="confirmation-actions">
+        <a
+          class="confirmation-action secondary"
+          routerLink="/track"
+          [queryParams]="{ orderId: currentOrder.id }"
+        >Track your order</a>
+        <a class="confirmation-action" routerLink="/">Continue shopping</a>
+      </div>
     }
   </section>
 </main>

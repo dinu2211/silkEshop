@@ -27,7 +27,7 @@ export class Checkout {
   readonly cartService = inject(CartService);
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
-  readonly shippingFee = 1;
+  readonly shippingFee = 100;
   readonly shippingDetails: OrderCustomer = {
     fullName: '',
     phone: '',

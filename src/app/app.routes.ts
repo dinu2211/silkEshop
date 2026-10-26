@@ -11,6 +11,9 @@ export const routes: Routes = [{
   path: 'contact',
   loadComponent: () => import('./contact/contact').then(m => m.Contact)
 }, {
+  path: 'track',
+  loadComponent: () => import('./track/track').then(m => m.Track)
+}, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
 }, {
