@@ -78,7 +78,7 @@ export class Checkout {
         key: paymentOrder.keyId,
         amount: paymentOrder.amount,
         currency: paymentOrder.currency,
-        name: 'Silk Eshop',
+        name: 'Weave Made',
         description: 'Order payment',
         order_id: paymentOrder.razorpayOrderId,
         prefill: {

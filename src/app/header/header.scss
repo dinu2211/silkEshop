@@ -24,36 +24,50 @@
 }
 
 .logo {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
   justify-self: start;
-  gap: 11px;
   color: inherit;
   text-decoration: none;
 }
 
 .logo-mark {
+  display: block;
+  width: 58px;
+  height: 37px;
+  color: #a77b4d;
+}
+
+.logo-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.logo-copy {
   display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 50%;
-  background: #493729;
-  color: #f8e8c4;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 24px;
-  font-style: italic;
+  justify-items: center;
+  gap: 3px;
 }
 
 .logo-name {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.6px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 2.8px;
+  line-height: 1.05;
+  text-transform: uppercase;
 }
 
-.logo-accent {
-  color: #9a7048;
+.logo-tagline {
+  color: #8a7765;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 1.6px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .header-nav {
@@ -134,13 +148,18 @@
   }
 
   .logo-mark {
-    width: 38px;
-    height: 38px;
-    font-size: 22px;
+    width: 52px;
+    height: 32px;
   }
 
   .logo-name {
-    font-size: 20px;
+    font-size: 13px;
+    letter-spacing: 2.3px;
+  }
+
+  .logo-tagline {
+    font-size: 8px;
+    letter-spacing: 1.15px;
   }
 
   .header-nav {
