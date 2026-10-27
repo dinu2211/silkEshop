@@ -50,6 +50,18 @@ export interface OrderPaymentStatus {
   paymentId: string | null;
 }
 
+export const ORDER_STATUSES = [
+  'pending',
+  'confirmed',
+  'processing',
+  'shipped',
+  'out_for_delivery',
+  'fulfilled',
+  'cancelled',
+] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
 export interface OrderTrackingItem {
   productName: string;
   quantity: number;
@@ -60,11 +72,7 @@ export interface OrderTrackingItem {
   sleeveLength: string | null;
 }
 
-export type OrderTrackingStatus =
-  | OrderPaymentStatus['status']
-  | 'processing'
-  | 'shipped'
-  | 'out_for_delivery';
+export type OrderTrackingStatus = OrderStatus;
 
 export interface OrderTrackingEvent {
   id: string;
@@ -87,18 +95,24 @@ export interface OrderTrackingDetails {
   events: OrderTrackingEvent[];
 }
 
-const trackingStatuses: readonly string[] = [
-  'pending',
-  'confirmed',
-  'cancelled',
-  'fulfilled',
-  'processing',
-  'shipped',
-  'out_for_delivery',
-];
+export interface AdminOrder extends Omit<OrderTrackingDetails, 'events'> {
+  fullName: string;
+  phone: string;
+  email: string | null;
+  address: string;
+  apartment: string | null;
+  city: string;
+  state: string;
+  postalCode: string;
+  deliveryNote: string | null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isOrderStatus(value: unknown): value is OrderStatus {
+  return typeof value === 'string' && ORDER_STATUSES.some((status) => status === value);
 }
 
 function isNullableString(value: unknown): value is string | null {
@@ -125,8 +139,7 @@ function isOrderTrackingEvent(value: unknown): value is OrderTrackingEvent {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
-    typeof value['status'] === 'string' &&
-    trackingStatuses.includes(value['status']) &&
+    isOrderStatus(value['status']) &&
     typeof value['title'] === 'string' &&
     isNullableString(value['description']) &&
     isNullableString(value['location']) &&
@@ -138,8 +151,7 @@ function isOrderTrackingDetails(value: unknown): value is OrderTrackingDetails {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
-    typeof value['status'] === 'string' &&
-    trackingStatuses.includes(value['status']) &&
+    isOrderStatus(value['status']) &&
     (value['paymentStatus'] === 'pending' ||
       value['paymentStatus'] === 'paid' ||
       value['paymentStatus'] === 'failed') &&
@@ -157,12 +169,158 @@ function isOrderTrackingDetails(value: unknown): value is OrderTrackingDetails {
   );
 }
 
+function isAdminOrder(value: unknown): value is AdminOrder {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    isOrderStatus(value['status']) &&
+    (value['paymentStatus'] === 'pending' ||
+      value['paymentStatus'] === 'paid' ||
+      value['paymentStatus'] === 'failed') &&
+    typeof value['createdAt'] === 'string' &&
+    typeof value['subtotal'] === 'number' &&
+    Number.isFinite(value['subtotal']) &&
+    typeof value['shippingFee'] === 'number' &&
+    Number.isFinite(value['shippingFee']) &&
+    typeof value['total'] === 'number' &&
+    Number.isFinite(value['total']) &&
+    Array.isArray(value['items']) &&
+    value['items'].every(isOrderTrackingItem) &&
+    typeof value['fullName'] === 'string' &&
+    typeof value['phone'] === 'string' &&
+    isNullableString(value['email']) &&
+    typeof value['address'] === 'string' &&
+    isNullableString(value['apartment']) &&
+    typeof value['city'] === 'string' &&
+    typeof value['state'] === 'string' &&
+    typeof value['postalCode'] === 'string' &&
+    isNullableString(value['deliveryNote'])
+  );
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class Supabase {
   private readonly client = createClient(environment.supabaseUrl, environment.supabaseKey);
   private readonly table = 'products';
+  private readonly adminSessionStorageKey = 'silk-eshop-admin-session';
+
+  async isOrderAdminSignedIn(): Promise<boolean> {
+    const sessionToken = this.getAdminSessionToken();
+    if (!sessionToken) {
+      return false;
+    }
+
+    const { data, error } = await this.client.rpc('admin_session_is_valid', {
+      session_token_input: sessionToken,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data !== true) {
+      sessionStorage.removeItem(this.adminSessionStorageKey);
+      return false;
+    }
+
+    return true;
+  }
+
+  async signInOrderAdmin(userId: string, password: string): Promise<void> {
+    const { data, error } = await this.client.rpc('admin_login', {
+      user_id_input: userId.trim(),
+      password_input: password,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (isRecord(data) && typeof data['error'] === 'string') {
+      throw new Error(data['error']);
+    }
+
+    if (
+      !isRecord(data) ||
+      typeof data['sessionToken'] !== 'string' ||
+      typeof data['expiresAt'] !== 'string' ||
+      Date.parse(data['expiresAt']) <= Date.now()
+    ) {
+      throw new Error('Administrator sign-in did not return a valid session.');
+    }
+
+    sessionStorage.setItem(this.adminSessionStorageKey, data['sessionToken']);
+  }
+
+  async signOutOrderAdmin(): Promise<void> {
+    const sessionToken = this.getAdminSessionToken();
+    if (!sessionToken) {
+      return;
+    }
+
+    const { error } = await this.client.rpc('admin_logout', {
+      session_token_input: sessionToken,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    sessionStorage.removeItem(this.adminSessionStorageKey);
+  }
+
+  async getAdminOrders(): Promise<AdminOrder[]> {
+    const { data, error } = await this.client.rpc('get_admin_orders', {
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isAdminOrder)) {
+      throw new Error('Order management lookup did not return valid order details.');
+    }
+
+    return data;
+  }
+
+  async updateAdminOrderStatus(orderId: string, status: OrderStatus): Promise<OrderStatus> {
+    const { data, error } = await this.client.rpc('update_admin_order_status', {
+      order_id_input: orderId,
+      next_status_input: status,
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (data !== status) {
+      throw new Error('Order status update did not return the requested status.');
+    }
+
+    return status;
+  }
+
+  private getAdminSessionToken(): string | null {
+    if (typeof sessionStorage === 'undefined') {
+      return null;
+    }
+
+    return sessionStorage.getItem(this.adminSessionStorageKey);
+  }
+
+  private requireAdminSessionToken(): string {
+    const sessionToken = this.getAdminSessionToken();
+    if (!sessionToken) {
+      throw new Error('Administrator sign-in is required.');
+    }
+
+    return sessionToken;
+  }
 
   async createOrder(customer: OrderCustomer, items: CartItem[]): Promise<string> {
     const { data, error } = await this.client.rpc('create_order', {

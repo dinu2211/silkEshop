@@ -14,6 +14,9 @@ export const routes: Routes = [{
   path: 'track',
   loadComponent: () => import('./track/track').then(m => m.Track)
 }, {
+  path: 'view-order',
+  loadComponent: () => import('./view-order/view-order').then(m => m.ViewOrder)
+}, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
 }, {

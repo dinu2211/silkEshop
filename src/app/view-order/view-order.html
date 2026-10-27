@@ -1,0 +1,256 @@
+<main class="orders-page" [class.printing]="printingOrderId() !== null">
+  <div class="orders-shell">
+    <a class="back-link" routerLink="/">
+      <span aria-hidden="true">←</span>
+      Continue shopping
+    </a>
+
+    @if (isCheckingSession()) {
+      <p class="page-message" role="status">Checking administrator access…</p>
+    } @else if (!isAdmin()) {
+      <section class="sign-in-card" aria-labelledby="sign-in-title">
+        <p class="eyebrow">WEAVE MADE · STAFF</p>
+        <h1 id="sign-in-title">Order management</h1>
+        <p class="intro">Sign in with an authorized administrator account to view customer orders.</p>
+
+        <form class="sign-in-form" (ngSubmit)="signIn()">
+          <label class="field">
+            <span>Admin user ID</span>
+            <input
+              type="text"
+              name="userId"
+              [(ngModel)]="userId"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          @if (errorMessage()) {
+            <p class="error-message" role="alert">{{ errorMessage() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="isSigningIn()">
+            {{ isSigningIn() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      </section>
+    } @else {
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">WEAVE MADE · STAFF</p>
+          <h1>Order management</h1>
+          <p>Review new orders and move each one through its fulfillment stages.</p>
+        </div>
+        <div class="heading-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isLoadingOrders() || updatingOrderId() !== null"
+            (click)="loadOrders()"
+          >
+            Refresh
+          </button>
+          <button class="text-button" type="button" (click)="signOut()">Sign out</button>
+        </div>
+      </header>
+
+      @if (errorMessage()) {
+        <p class="error-message page-error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <nav class="status-filters" aria-label="Filter orders by status">
+        <button
+          class="filter-chip"
+          type="button"
+          [class.selected]="filter() === 'all'"
+          [attr.aria-pressed]="filter() === 'all'"
+          (click)="filter.set('all')"
+        >
+          All <span class="filter-count">{{ orders().length }}</span>
+        </button>
+        @for (status of statuses; track status) {
+          <button
+            [class]="'filter-chip status-' + status + (filter() === status ? ' selected' : '')"
+            type="button"
+            [attr.aria-pressed]="filter() === status"
+            (click)="filter.set(status)"
+          >
+            {{ statusLabel(status) | titlecase }}
+            <span class="filter-count">{{ statusCounts()[status] }}</span>
+          </button>
+        }
+      </nav>
+
+      @if (isLoadingOrders() && orders().length === 0) {
+        <p class="page-message" role="status">Loading orders…</p>
+      } @else if (filteredOrders().length === 0) {
+        <section class="empty-state">
+          <span class="empty-icon" aria-hidden="true">✓</span>
+          <h2>No {{ emptyFilterLabel() }}orders</h2>
+          <p>
+            @if (filter() === 'pending') {
+              New orders will appear here when customers place them.
+            } @else {
+              There are no orders in this status right now.
+            }
+          </p>
+        </section>
+      } @else {
+        <section class="order-list" aria-label="Orders" aria-live="polite">
+          @for (order of filteredOrders(); track order.id) {
+            <article
+              class="order-card"
+              [class.printing]="printingOrderId() === order.id"
+            >
+              <header class="order-heading">
+                <div>
+                  <p class="order-reference">Order <span>{{ order.id }}</span></p>
+                  <p class="order-date">Placed {{ order.createdAt | date: 'd MMM y, h:mm a' }}</p>
+                </div>
+                <span class="status-badge" [class]="'status-badge status-' + order.status">
+                  {{ statusLabel(order.status) | titlecase }}
+                </span>
+              </header>
+
+              <div class="order-content">
+                <section class="customer-details" aria-label="Customer details">
+                  <h2>{{ order.fullName }}</h2>
+                  <a [href]="'tel:' + order.phone">{{ order.phone }}</a>
+                  @if (order.email) {
+                    <a [href]="'mailto:' + order.email">{{ order.email }}</a>
+                  }
+                  <p>
+                    {{ order.address }}
+                    @if (order.apartment) {, {{ order.apartment }}}
+                    <br />{{ order.city }}, {{ order.state }} {{ order.postalCode }}
+                  </p>
+                  @if (order.deliveryNote) {
+                    <p class="delivery-note"><strong>Delivery note:</strong> {{ order.deliveryNote }}</p>
+                  }
+                </section>
+
+                <section class="items-section" aria-label="Order items">
+                  <h3>Items</h3>
+                  <ul class="item-list">
+                    @for (item of order.items; track $index) {
+                      <li>
+                        <div>
+                          <strong>{{ item.productName }}</strong>
+                          <span>
+                            Qty {{ item.quantity }}
+                            @if (item.dhotiSize) { · Dhoti {{ item.dhotiSize }} }
+                            @if (item.shirtSize) { · Shirt {{ item.shirtSize }} }
+                            @if (item.sleeveLength) { · {{ item.sleeveLength }} sleeve }
+                          </span>
+                        </div>
+                        <span>{{ item.lineTotal | currency: 'INR' }}</span>
+                      </li>
+                    }
+                  </ul>
+                </section>
+
+                <aside class="order-total" aria-label="Order totals">
+                  <p>Payment <span class="payment-badge" [class.paid]="order.paymentStatus === 'paid'">
+                    {{ order.paymentStatus | titlecase }}
+                  </span></p>
+                  <p>Subtotal <span>{{ order.subtotal | currency: 'INR' }}</span></p>
+                  <p>Shipping <span>{{ order.shippingFee | currency: 'INR' }}</span></p>
+                  <p class="total-line">Total <strong>{{ order.total | currency: 'INR' }}</strong></p>
+                </aside>
+              </div>
+
+              @if (order.status === 'processing') {
+                <section class="dispatch-slip" aria-label="Courier dispatch details">
+                  <p class="dispatch-eyebrow">WEAVE MADE · COURIER DISPATCH</p>
+                  <h1>Shipping details</h1>
+                  <p class="dispatch-reference">Order {{ order.id }}</p>
+                  <div class="dispatch-recipient">
+                    <h2>{{ order.fullName }}</h2>
+                    <p>{{ order.phone }}</p>
+                    @if (order.email) {
+                      <p>{{ order.email }}</p>
+                    }
+                  </div>
+                  <div class="dispatch-address">
+                    <h2>Deliver to</h2>
+                    <p>
+                      {{ order.address }}
+                      @if (order.apartment) {, {{ order.apartment }}}
+                      <br />{{ order.city }}, {{ order.state }} {{ order.postalCode }}
+                    </p>
+                  </div>
+                  @if (order.deliveryNote) {
+                    <div class="dispatch-note">
+                      <h2>Delivery note</h2>
+                      <p>{{ order.deliveryNote }}</p>
+                    </div>
+                  }
+                  <div class="dispatch-items">
+                    <h2>Package contents</h2>
+                    <ul class="item-list">
+                      @for (item of order.items; track $index) {
+                        <li>
+                          <div>
+                            <strong>{{ item.productName }}</strong>
+                            <span>
+                              Qty {{ item.quantity }}
+                              @if (item.dhotiSize) { · Dhoti {{ item.dhotiSize }} }
+                              @if (item.shirtSize) { · Shirt {{ item.shirtSize }} }
+                              @if (item.sleeveLength) { · {{ item.sleeveLength }} sleeve }
+                            </span>
+                          </div>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </section>
+              }
+
+              @if (nextStatus(order.status); as next) {
+                <footer class="order-actions">
+                  @if (order.status === 'processing') {
+                    <button
+                      class="secondary-button print-button"
+                      type="button"
+                      (click)="printDispatchDetails(order)"
+                    >
+                      Print dispatch details
+                    </button>
+                  }
+                  <button
+                    class="primary-button"
+                    type="button"
+                    [disabled]="updatingOrderId() !== null"
+                    (click)="updateStatus(order, next)"
+                  >
+                    {{ updatingOrderId() === order.id ? 'Updating…' : 'Mark as ' + (statusLabel(next) | titlecase) }}
+                  </button>
+                  <button
+                    class="cancel-button"
+                    type="button"
+                    [disabled]="updatingOrderId() !== null"
+                    (click)="updateStatus(order, 'cancelled')"
+                  >
+                    Cancel order
+                  </button>
+                </footer>
+              } @else if (order.status !== 'cancelled') {
+                <footer class="order-actions terminal-status">This order is complete.</footer>
+              } @else {
+                <footer class="order-actions terminal-status">This order was cancelled.</footer>
+              }
+            </article>
+          }
+        </section>
+      }
+    }
+  </div>
+</main>

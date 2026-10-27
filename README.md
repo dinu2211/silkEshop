@@ -36,6 +36,25 @@ handler. Payment verification checks the Razorpay signature and captured payment
 order amount before updating `orders.status` and `orders.payment_status`. The confirmation page
 reads the status from the `orders` table through the status function.
 
+## Order management
+
+Apply the order-management and custom-admin-login migrations after the existing order and tracking
+migrations. Create an administrator from the Supabase SQL Editor, replacing both placeholders with
+new values:
+
+```sql
+insert into public.admin_users (user_id, password_hash)
+values (
+  'YOUR_ADMIN_ID',
+  extensions.crypt('CHOOSE_A_NEW_PASSWORD_AT_LEAST_12_CHARACTERS', extensions.gen_salt('bf', 12))
+);
+```
+
+Only the bcrypt password hash is stored. The `/view-order` page signs in with that admin ID and
+password; database functions validate short-lived sessions for every order read and status update.
+Use a new password with 12–72 bytes; five incorrect attempts lock that admin account for 15 minutes.
+Do not put an unhashed password or Supabase service-role key in the application.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
