@@ -60,17 +60,10 @@
 }
 
 .wordmark__icon {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border: 1px solid #a48a61;
-  border-radius: 50%;
-  color: #927446;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.35rem;
-  font-weight: 400;
-  letter-spacing: 0;
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .wordmark__light {

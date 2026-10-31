@@ -60,7 +60,10 @@ describe('ViewOrder', () => {
     ]);
     supabase.isOrderAdminSignedIn.and.resolveTo(true);
     supabase.getAdminOrders.and.resolveTo([pendingOrder, confirmedOrder]);
-    supabase.updateAdminOrderStatus.and.callFake(async (_orderId, status) => status);
+    supabase.updateAdminOrderStatus.and.callFake(async (_orderId, status) => ({
+      status,
+      whatsappSent: status === 'confirmed',
+    }));
 
     await TestBed.configureTestingModule({
       imports: [ViewOrder],
@@ -99,6 +102,20 @@ describe('ViewOrder', () => {
       'confirmed',
     );
     expect(component.orders()[0].status).toBe('confirmed');
+    expect(component.errorMessage()).toBe('');
+  });
+
+  it('reports when an order is confirmed without WhatsApp opt-in', async () => {
+    supabase.updateAdminOrderStatus.and.resolveTo({
+      status: 'confirmed',
+      whatsappSent: false,
+      whatsappSkipReason: 'customer_not_opted_in',
+    });
+
+    await component.updateStatus(pendingOrder, 'confirmed');
+
+    expect(component.orders()[0].status).toBe('confirmed');
+    expect(component.errorMessage()).toContain('customer did not opt in');
   });
 
   it('shows courier print details only for orders in processing', () => {

@@ -45,28 +45,29 @@ describe('ProductDetails', () => {
   });
 
   it('shows product information and lets the user configure the quantity and clothing options', () => {
+    const rootElement: HTMLElement = fixture.nativeElement;
     const product = TestBed.inject(CartService).products().find(
       (item) => item.category === ProductCategory.SilkDhotiSet,
     )!;
     component.product = product;
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain(product.name);
-    expect(fixture.nativeElement.querySelector<HTMLImageElement>('.product-image')!.src)
+    expect(rootElement.textContent).toContain(product.name);
+    expect(rootElement.querySelector<HTMLImageElement>('.product-image')!.src)
       .toContain(product.imageUrl);
-    expect(fixture.nativeElement.textContent).toContain('Dhoti size');
-    expect(fixture.nativeElement.textContent).toContain('Shirt size');
-    expect(fixture.nativeElement.textContent).toContain('Sleeve length');
+    expect(rootElement.textContent).toContain('Dhoti size');
+    expect(rootElement.textContent).toContain('Shirt size');
+    expect(rootElement.textContent).toContain('Sleeve length');
 
-    const options = fixture.nativeElement.querySelectorAll<HTMLButtonElement>('.option-button');
+    const options = rootElement.querySelectorAll<HTMLButtonElement>('.option-button');
     options[2].click();
     options[5].click();
     options[7].click();
-    fixture.nativeElement.querySelector('[aria-label="Increase quantity"]').click();
+    rootElement.querySelector<HTMLButtonElement>('[aria-label="Increase quantity"]')!.click();
     fixture.detectChanges();
 
     expect(component.quantity).toBe(2);
-    expect(fixture.nativeElement.textContent).toContain('2');
+    expect(rootElement.textContent).toContain('2');
   });
 
   it('adds the selected options and quantity to the cart', () => {

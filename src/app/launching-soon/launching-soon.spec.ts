@@ -27,4 +27,10 @@ describe('LaunchingSoon', () => {
     expect(fixture.nativeElement.textContent).toContain('Weave Made');
     expect(fixture.nativeElement.textContent).toContain('Threads of Tradition');
   });
+
+  it('should render the PNG brand icon', () => {
+    const icon = fixture.nativeElement.querySelector('.wordmark__icon') as HTMLImageElement;
+
+    expect(icon.getAttribute('src')).toBe('/favicon.png');
+  });
 });

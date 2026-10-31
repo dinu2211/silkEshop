@@ -23,6 +23,12 @@ describe('Footer', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should render the PNG brand icon', () => {
+    const icon = fixture.nativeElement.querySelector('.brand-mark') as HTMLImageElement;
+
+    expect(icon.getAttribute('src')).toBe('/favicon.png');
+  });
+
   it('should render the footer navigation', () => {
     const footer = fixture.nativeElement.querySelector('footer');
     const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>('.footer-navigation a');

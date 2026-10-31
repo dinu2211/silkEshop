@@ -187,6 +187,21 @@
   grid-column: 1 / -1;
 }
 
+.whatsapp-opt-in > span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whatsapp-opt-in input[type='checkbox'] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: #817044;
+}
+
 .required-mark {
   color: #ad654c;
 }

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.get-order-payment-status]
 verify_jwt = false
+
+[functions.update-admin-order-status]
+verify_jwt = false

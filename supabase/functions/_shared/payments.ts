@@ -1,3 +1,5 @@
+import { sendOrderConfirmation } from './whatsapp.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
@@ -313,6 +315,11 @@ export async function handlePaymentRequest(
       razorpay_payment_id: razorpayPaymentId,
     });
     if (updated.length) {
+      try {
+        await sendOrderConfirmation(order.id);
+      } catch (error) {
+        console.error('WhatsApp order confirmation could not be sent.', error);
+      }
       return jsonResponse(orderStatus(updated[0]));
     }
 
@@ -329,7 +336,3 @@ export async function handlePaymentRequest(
     return jsonResponse({ error: 'Payment service is temporarily unavailable.' }, 500);
   }
 }
-
-
-
-// npx supabase secrets set RAZORPAY_KEY_ID="rzp_live_Trn0CrmXdsrxJD" RAZORPAY_KEY_SECRET="6XDrOp6FZ3W25XrSzBOz7UAY" --project-ref krrsrzekaxqfmxfbmlnd

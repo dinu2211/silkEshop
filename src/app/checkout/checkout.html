@@ -78,6 +78,18 @@
               <small id="phone-hint">Enter a 10-digit Indian mobile number.</small>
             </label>
 
+            <label class="field field-wide whatsapp-opt-in">
+              <span>
+                <input
+                  type="checkbox"
+                  name="whatsappOptIn"
+                  [(ngModel)]="shippingDetails.whatsappOptIn"
+                />
+                Send order confirmation and updates to this number on WhatsApp
+                <span class="optional-label">Optional</span>
+              </span>
+            </label>
+
             <label class="field">
               <span>Email <span class="optional-label">Optional</span></span>
               <input

@@ -31,6 +31,7 @@ export class Checkout {
   readonly shippingDetails: OrderCustomer = {
     fullName: '',
     phone: '',
+    whatsappOptIn: false,
     email: '',
     address: '',
     apartment: '',

@@ -18,6 +18,7 @@ export type ProductUpdate = Partial<Omit<Product, 'id'>>;
 export interface OrderCustomer {
   fullName: string;
   phone: string;
+  whatsappOptIn: boolean;
   email: string;
   address: string;
   apartment: string;
@@ -61,6 +62,12 @@ export const ORDER_STATUSES = [
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export interface AdminOrderStatusUpdateResult {
+  status: OrderStatus;
+  whatsappSent: boolean;
+  whatsappSkipReason?: 'customer_not_opted_in' | 'delivery_failed' | 'not_confirmation';
+}
 
 export interface OrderTrackingItem {
   productName: string;
@@ -287,22 +294,30 @@ export class Supabase {
     return data;
   }
 
-  async updateAdminOrderStatus(orderId: string, status: OrderStatus): Promise<OrderStatus> {
-    const { data, error } = await this.client.rpc('update_admin_order_status', {
-      order_id_input: orderId,
-      next_status_input: status,
-      session_token_input: this.requireAdminSessionToken(),
-    });
+  async updateAdminOrderStatus(
+    orderId: string,
+    status: OrderStatus,
+  ): Promise<AdminOrderStatusUpdateResult> {
+    const { data, error } = await this.client.functions.invoke<AdminOrderStatusUpdateResult>(
+      'update-admin-order-status',
+      {
+        body: {
+          orderId,
+          status,
+          sessionToken: this.requireAdminSessionToken(),
+        },
+      },
+    );
 
     if (error) {
       throw error;
     }
 
-    if (data !== status) {
+    if (!data || data.status !== status) {
       throw new Error('Order status update did not return the requested status.');
     }
 
-    return status;
+    return data;
   }
 
   private getAdminSessionToken(): string | null {
@@ -328,6 +343,7 @@ export class Supabase {
         customer: {
           full_name: customer.fullName,
           phone: customer.phone,
+          whatsapp_opt_in: customer.whatsappOptIn,
           email: customer.email || null,
           address: customer.address,
           apartment: customer.apartment || null,

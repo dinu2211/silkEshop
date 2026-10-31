@@ -55,6 +55,28 @@ password; database functions validate short-lived sessions for every order read 
 Use a new password with 12–72 bytes; five incorrect attempts lock that admin account for 15 minutes.
 Do not put an unhashed password or Supabase service-role key in the application.
 
+## WhatsApp order confirmations
+
+Apply the WhatsApp consent migration after the existing order-management migrations. Customers can
+optionally opt in at checkout; only opted-in customers receive a message when an order changes from
+`pending` to `confirmed`, whether payment verification or an administrator performs the transition.
+Create and approve a WhatsApp message template named
+`order_confirmed` with the body `Your order is confirmed. Your order ID is {{1}}.` in the language
+configured below. The WhatsApp Business sender must be registered with Meta Cloud API. The business
+phone number `8667218771` is the sender identity; Meta's phone-number ID and a permanent access token
+are separate values and must be obtained from the WhatsApp business account.
+
+Configure the Edge Function secrets on the server, using the API version currently supported by
+your Meta app and the phone-number ID shown in WhatsApp Manager:
+
+```bash
+npx supabase secrets set WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id" WHATSAPP_ACCESS_TOKEN="EAAhtZCFLkLXEBS0ACdxiltohOTXOHGLfe7KIliEc9ECChKxtDLHI0v74kfRAgKR6xINGIkMyIHlHqAP3DvDG8nY2vtWpwejAGZA4bdVVG2CJrfnzFiV6mRfg1zC4dsw0b8JtkyzKfZAqrV07GIE02umCujZABnbulQdBQjaHSpMK385QvZBZB4UO11YqmRRxZCnV0WVDbnxZBCJf25L0hJ4JZAnzGXOgS7HNNTDwZCsZBp6oespnSYHwmE9l3jOPZCBWQ3jlcNjT3d1Pg5UP04PxlHexfAZDZD" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en" WHATSAPP_API_VERSION="v25.0" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+```
+
+Delivery errors do not undo the order status update; the admin page reports when confirmation could
+not be sent. Messages are sent through Meta's approved template API.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -117,4 +139,4 @@ npx supabase functions delete get-order-payment-status --project-ref krrsrzekaxq
 
 
 
-npx supabase secrets set RAZORPAY_KEY_ID="rzp_live_Trn0CrmXdsrxJD" RAZORPAY_KEY_SECRET="6XDrOp6FZ3W25XrSzBOz7UAY" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase secrets set RAZORPAY_KEY_ID="your_key_id" RAZORPAY_KEY_SECRET="your_key_secret" --project-ref krrsrzekaxqfmxfbmlnd

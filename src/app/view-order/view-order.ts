@@ -135,12 +135,19 @@ export class ViewOrder {
     this.updatingOrderId.set(order.id);
     this.errorMessage.set('');
     try {
-      const updatedStatus = await this.supabase.updateAdminOrderStatus(order.id, status);
+      const result = await this.supabase.updateAdminOrderStatus(order.id, status);
       this.orders.update((orders) =>
         orders.map((current) =>
-          current.id === order.id ? { ...current, status: updatedStatus } : current,
+          current.id === order.id ? { ...current, status: result.status } : current,
         ),
       );
+      if (result.status === 'confirmed' && !result.whatsappSent) {
+        this.errorMessage.set(
+          result.whatsappSkipReason === 'customer_not_opted_in'
+            ? 'Order confirmed. WhatsApp was not sent because the customer did not opt in.'
+            : 'Order confirmed, but the WhatsApp message could not be sent.',
+        );
+      }
     } catch (error: unknown) {
       console.error(`Failed to update order ${order.id}.`, error);
       this.errorMessage.set('The order status could not be updated. Refresh and try again.');

@@ -27,6 +27,12 @@ describe('Header', () => {
     expect(component).toBeTruthy();
   });
 
+  it('should render the PNG brand icon', () => {
+    const icon = fixture.nativeElement.querySelector('.logo-mark') as HTMLImageElement;
+
+    expect(icon.getAttribute('src')).toBe('/favicon.png');
+  });
+
   afterEach(() => {
     httpTesting.verify();
   });
