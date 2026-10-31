@@ -70,7 +70,7 @@ Configure the Edge Function secrets on the server, using the API version current
 your Meta app and the phone-number ID shown in WhatsApp Manager:
 
 ```bash
-npx supabase secrets set WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id" WHATSAPP_ACCESS_TOKEN="EAAhtZCFLkLXEBS0ACdxiltohOTXOHGLfe7KIliEc9ECChKxtDLHI0v74kfRAgKR6xINGIkMyIHlHqAP3DvDG8nY2vtWpwejAGZA4bdVVG2CJrfnzFiV6mRfg1zC4dsw0b8JtkyzKfZAqrV07GIE02umCujZABnbulQdBQjaHSpMK385QvZBZB4UO11YqmRRxZCnV0WVDbnxZBCJf25L0hJ4JZAnzGXOgS7HNNTDwZCsZBp6oespnSYHwmE9l3jOPZCBWQ3jlcNjT3d1Pg5UP04PxlHexfAZDZD" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en" WHATSAPP_API_VERSION="v25.0" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase secrets set WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id" WHATSAPP_ACCESS_TOKEN="your_access_token" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en" WHATSAPP_API_VERSION="v25.0" --project-ref krrsrzekaxqfmxfbmlnd
 npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
 ```
 
