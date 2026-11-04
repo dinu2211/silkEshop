@@ -28,6 +28,10 @@ administrator sign-in as `/view-order` and supports adding and updating catalog 
 and each variant's price and available quantity. The latter migration moves existing product prices
 into option variants with zero stock; set quantities in product management to make products
 available. Products appear on the home page only when at least one matching variant has stock.
+Apply `supabase/migrations/20261104000000_deduct_stock_on_order_confirmation.sql` after the product
+inventory, image gallery, custom-admin-login, and WhatsApp order-confirmation migrations. It deducts
+the ordered variant quantities atomically when an administrator confirms an order or Razorpay
+payment is verified; orders that exceed available stock cannot be confirmed.
 
 Each `variantPrices` entry contains a price and available quantity for one exact option combination.
 Include every option shown for the product category:

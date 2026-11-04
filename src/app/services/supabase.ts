@@ -445,6 +445,7 @@ export class Supabase {
           quantity: item.quantity,
           unit_price: item.price,
           dhoti_size: item.dhotiSize ?? null,
+          dhoti_type: item.dhotiType ?? null,
           shirt_size: item.shirtSize ?? null,
           sleeve_length: item.sleeveLength ?? null,
         })),

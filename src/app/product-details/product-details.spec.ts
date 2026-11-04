@@ -109,6 +109,27 @@ describe('ProductDetails', () => {
     expect(component.zoomLevel).toBe(component.minimumZoom);
   });
 
+  it('zooms toward the point clicked on the full-screen image', async () => {
+    const rootElement: HTMLElement = fixture.nativeElement;
+    rootElement.querySelector<HTMLButtonElement>('.image-open-button')!.click();
+    await fixture.whenStable();
+
+    const image = rootElement.querySelector<HTMLImageElement>('.fullscreen-image')!;
+    spyOn(image, 'getBoundingClientRect').and.returnValue(new DOMRect(100, 50, 400, 600));
+    image.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 300, clientY: 200 }));
+    await fixture.whenStable();
+
+    expect(component.zoomLevel).toBe(2);
+    expect(component.zoomOriginX).toBe(50);
+    expect(component.zoomOriginY).toBe(25);
+    expect(image.style.transformOrigin).toBe('50% 25%');
+
+    rootElement.querySelector<HTMLButtonElement>('[aria-label="Reset zoom"]')!.click();
+    await fixture.whenStable();
+    expect(component.zoomOriginX).toBe(50);
+    expect(component.zoomOriginY).toBe(50);
+  });
+
   it('shows product information and lets the user configure the quantity and clothing options', () => {
     const rootElement: HTMLElement = fixture.nativeElement;
     const product = TestBed.inject(CartService).products().find(

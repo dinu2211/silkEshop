@@ -208,6 +208,7 @@
   height: auto;
   max-width: min(calc(100vw - 140px), 1400px);
   max-height: calc(100dvh - 120px);
+  cursor: zoom-in;
   object-fit: contain;
   transition: transform 160ms ease;
 }

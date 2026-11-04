@@ -49,6 +49,8 @@ export class ProductDetails implements OnChanges {
   selectedImageIndex = 0;
   isImageViewerOpen = false;
   zoomLevel = 1;
+  zoomOriginX = 50;
+  zoomOriginY = 50;
 
   readonly minimumZoom = 1;
   readonly maximumZoom = 3;
@@ -65,7 +67,7 @@ export class ProductDetails implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['product']) {
       this.isImageViewerOpen = false;
-      this.zoomLevel = this.minimumZoom;
+      this.resetZoom();
       const availableVariant = this.product.variantPrices.find((variant) => variant.quantity > 0);
       if (availableVariant) {
         this.dhotiSize = availableVariant.dhotiSize ?? this.dhotiSize;
@@ -81,20 +83,20 @@ export class ProductDetails implements OnChanges {
   selectImage(index: number): void {
     if (index >= 0 && index < this.product.imageUrls.length) {
       this.selectedImageIndex = index;
-      this.zoomLevel = this.minimumZoom;
+      this.resetZoom();
     }
   }
 
   openImageViewer(): void {
     if (this.selectedImage) {
-      this.zoomLevel = this.minimumZoom;
+      this.resetZoom();
       this.isImageViewerOpen = true;
     }
   }
 
   closeImageViewer(): void {
     this.isImageViewerOpen = false;
-    this.zoomLevel = this.minimumZoom;
+    this.resetZoom();
   }
 
   zoomIn(): void {
@@ -107,6 +109,33 @@ export class ProductDetails implements OnChanges {
 
   resetZoom(): void {
     this.zoomLevel = this.minimumZoom;
+    this.zoomOriginX = 50;
+    this.zoomOriginY = 50;
+  }
+
+  zoomAtPoint(event: MouseEvent): void {
+    const image = event.currentTarget;
+    if (!(image instanceof HTMLImageElement)) {
+      return;
+    }
+
+    const bounds = image.getBoundingClientRect();
+    if (bounds.width === 0 || bounds.height === 0) {
+      return;
+    }
+
+    const relativeX = (event.clientX - bounds.left) / bounds.width;
+    const relativeY = (event.clientY - bounds.top) / bounds.height;
+    const originX =
+      relativeX * this.zoomLevel + (this.zoomOriginX / 100) * (1 - this.zoomLevel);
+    const originY =
+      relativeY * this.zoomLevel + (this.zoomOriginY / 100) * (1 - this.zoomLevel);
+    this.zoomOriginX = Math.max(0, Math.min(100, originX * 100));
+    this.zoomOriginY = Math.max(0, Math.min(100, originY * 100));
+    this.zoomLevel = Math.min(
+      this.maximumZoom,
+      this.zoomLevel === this.minimumZoom ? 2 : this.zoomLevel + this.zoomStep,
+    );
   }
 
   previousImage(): void {

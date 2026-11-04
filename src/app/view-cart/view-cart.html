@@ -103,14 +103,22 @@
         <span>Subtotal</span>
         <strong>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
       </div>
+      @if (availabilityError(); as error) {
+        <p class="availability-error" role="alert">{{ error }}</p>
+      }
       <button
         class="checkout-button"
         type="button"
-        [disabled]="cartService.cartItems().length === 0"
+        [disabled]="cartService.cartItems().length === 0 || isCheckingAvailability()"
+        [attr.aria-busy]="isCheckingAvailability()"
         (click)="goToCheckout()"
       >
-        Checkout
-        <mat-icon>arrow_forward</mat-icon>
+        @if (isCheckingAvailability()) {
+          Checking availability...
+        } @else {
+          Checkout
+          <mat-icon>arrow_forward</mat-icon>
+        }
       </button>
     </footer>
   </section>

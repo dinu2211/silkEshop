@@ -294,6 +294,8 @@
             [src]="imageUrl"
             [alt]="product.name"
             [style.transform]="'scale(' + zoomLevel + ')'"
+            [style.transform-origin]="zoomOriginX + '% ' + zoomOriginY + '%'"
+            (click)="zoomAtPoint($event)"
           />
           @if (product.imageUrls.length > 1) {
             <button

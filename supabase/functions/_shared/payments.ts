@@ -120,6 +120,44 @@ async function updateOrder(orderId: string, updates: Record<string, string>): Pr
   return (await response.json()) as OrderRow[];
 }
 
+async function confirmPaidOrder(
+  orderId: string,
+  razorpayOrderId: string,
+  razorpayPaymentId: string,
+): Promise<boolean> {
+  const url = new URL('/rest/v1/rpc/confirm_paid_order', requiredEnvironment('SUPABASE_URL'));
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...supabaseHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      order_id_input: orderId,
+      razorpay_order_id_input: razorpayOrderId,
+      razorpay_payment_id_input: razorpayPaymentId,
+    }),
+  });
+
+  if (!response.ok) {
+    const result: unknown = await response.json().catch(() => null);
+    const message =
+      typeof result === 'object' &&
+      result !== null &&
+      'message' in result &&
+      typeof result.message === 'string'
+        ? result.message
+        : 'The order could not be confirmed and stock could not be updated.';
+    throw new ApiError(response.status >= 500 ? 502 : 409, message);
+  }
+
+  const result: unknown = await response.json();
+  if (typeof result !== 'boolean') {
+    throw new ApiError(502, 'The order confirmation response was invalid.');
+  }
+  return result;
+}
+
 function orderStatus(order: OrderRow) {
   const subtotal = Number(order.subtotal);
   const shippingFee = Number(order.shipping_fee);
@@ -309,25 +347,26 @@ export async function handlePaymentRequest(
       throw new ApiError(409, 'This order cannot be verified.');
     }
 
-    const updated = await updateOrder(order.id, {
-      status: 'confirmed',
-      payment_status: 'paid',
-      razorpay_payment_id: razorpayPaymentId,
-    });
-    if (updated.length) {
+    const newlyConfirmed = await confirmPaidOrder(
+      order.id,
+      razorpayOrderId,
+      razorpayPaymentId,
+    );
+    const latest = await readOrder(order.id);
+    if (latest.payment_status !== 'paid' || latest.razorpay_payment_id !== razorpayPaymentId) {
+      throw new ApiError(409, 'The order status changed during payment verification.');
+    }
+
+    if (newlyConfirmed) {
       try {
         await sendOrderConfirmation(order.id);
       } catch (error) {
         console.error('WhatsApp order confirmation could not be sent.', error);
       }
-      return jsonResponse(orderStatus(updated[0]));
-    }
-
-    const latest = await readOrder(id);
-    if (latest.payment_status === 'paid' && latest.razorpay_payment_id === razorpayPaymentId) {
       return jsonResponse(orderStatus(latest));
     }
-    throw new ApiError(409, 'The order status changed during payment verification.');
+
+    return jsonResponse(orderStatus(latest));
   } catch (error) {
     if (error instanceof ApiError) {
       return jsonResponse({ error: error.message }, error.status);
