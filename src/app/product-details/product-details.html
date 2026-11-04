@@ -23,8 +23,45 @@
     </button>
 
     <div class="product-image-panel">
-      @if (product.imageUrl) {
-        <img class="product-image" [src]="product.imageUrl" [alt]="product.name" />
+      @if (selectedImage; as imageUrl) {
+        <div class="image-viewer">
+          <img class="product-image" [src]="imageUrl" [alt]="product.name" />
+          @if (product.imageUrls.length > 1) {
+            <button
+              class="image-nav previous"
+              type="button"
+              aria-label="Previous product image"
+              (click)="previousImage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            <button
+              class="image-nav next"
+              type="button"
+              aria-label="Next product image"
+              (click)="nextImage()"
+            >
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+            <span class="image-counter">{{ selectedImageIndex + 1 }} / {{ product.imageUrls.length }}</span>
+          }
+        </div>
+        @if (product.imageUrls.length > 1) {
+          <div class="image-thumbnails" aria-label="Product images">
+            @for (thumbnail of product.imageUrls; track thumbnail; let index = $index) {
+              <button
+                type="button"
+                class="image-thumbnail"
+                [class.selected]="selectedImageIndex === index"
+                [attr.aria-label]="'View product image ' + (index + 1)"
+                [attr.aria-pressed]="selectedImageIndex === index"
+                (click)="selectImage(index)"
+              >
+                <img [src]="thumbnail" [alt]="product.name + ' image ' + (index + 1)" />
+              </button>
+            }
+          </div>
+        }
       } @else {
         <div class="image-placeholder" aria-hidden="true">
           <mat-icon>checkroom</mat-icon>
@@ -33,10 +70,32 @@
     </div>
 
     <div class="product-content">
+      <p class="product-collection">{{ product.collection ?? 'Collection not set' }}</p>
       <p class="product-category">{{ product.category }}</p>
       <h2 id="product-title">{{ product.name }}</h2>
       <p class="product-description">{{ product.description }}</p>
-      <p class="product-price">{{ product.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+      @if (product.idealFor) {
+        <p class="product-ideal-for">Ideal for {{ product.idealFor }}</p>
+      }
+      @if (selectedPrice !== null) {
+        <p class="product-price">{{ selectedPrice | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+        <p
+          class="stock-message"
+          [class.low-stock]="remainingQuantity > 0 && remainingQuantity <= 3"
+          [class.out-of-stock]="remainingQuantity === 0"
+          role="status"
+        >
+          @if (remainingQuantity > 3) {
+            {{ remainingQuantity }} available
+          } @else if (remainingQuantity > 0) {
+            Only {{ remainingQuantity }} left
+          } @else {
+            Out of stock
+          }
+        </p>
+      } @else {
+        <p class="product-price">Unavailable</p>
+      }
 
       <div class="product-options">
         @if (showsDhotiSize) {
@@ -48,10 +107,29 @@
                   class="option-button"
                   type="button"
                   [class.selected]="dhotiSize === size"
+                  [disabled]="!optionAvailable('dhotiSize', size)"
                   [attr.aria-pressed]="dhotiSize === size"
-                  (click)="dhotiSize = size"
+                  (click)="selectDhotiSize(size)"
                 >
                   {{ size }}
+                </button>
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="option-group">
+            <legend>Dhoti type</legend>
+            <div class="option-list">
+              @for (type of dhotiTypes; track type) {
+                <button
+                  class="option-button"
+                  type="button"
+                  [class.selected]="dhotiType === type"
+                  [disabled]="!optionAvailable('dhotiType', type)"
+                  [attr.aria-pressed]="dhotiType === type"
+                  (click)="selectDhotiType(type)"
+                >
+                  {{ type }}
                 </button>
               }
             </div>
@@ -67,8 +145,9 @@
                   class="option-button"
                   type="button"
                   [class.selected]="shirtSize === size"
+                  [disabled]="!optionAvailable('shirtSize', size)"
                   [attr.aria-pressed]="shirtSize === size"
-                  (click)="shirtSize = size"
+                  (click)="selectShirtSize(size)"
                 >
                   {{ size }}
                 </button>
@@ -84,8 +163,9 @@
                   class="option-button"
                   type="button"
                   [class.selected]="sleeveLength === length"
+                  [disabled]="!optionAvailable('sleeveLength', length)"
                   [attr.aria-pressed]="sleeveLength === length"
-                  (click)="sleeveLength = length"
+                  (click)="selectSleeveLength(length)"
                 >
                   {{ length }}
                 </button>
@@ -111,14 +191,24 @@
             class="quantity-button"
             type="button"
             aria-label="Increase quantity"
+            [disabled]="quantity >= remainingQuantity"
             (click)="increaseQuantity()"
           >
             <mat-icon>add</mat-icon>
           </button>
         </div>
-        <button class="add-to-cart" type="button" (click)="addToCart()">
-          Add to cart
-          <mat-icon>shopping_bag</mat-icon>
+        <button
+          class="add-to-cart"
+          type="button"
+          [disabled]="!selectedVariant || remainingQuantity === 0"
+          (click)="addToCart()"
+        >
+          @if (remainingQuantity > 0) {
+            Add to cart
+            <mat-icon>shopping_bag</mat-icon>
+          } @else {
+            Out of stock
+          }
         </button>
       </div>
     </div>

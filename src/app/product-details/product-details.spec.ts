@@ -4,6 +4,7 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 
 import {
   CartService,
+  DhotiType,
   DhotiSize,
   ProductCategory,
   ShirtSize,
@@ -31,9 +32,9 @@ describe('ProductDetails', () => {
         id: 'silk-dhoti-set-01',
         name: 'Silk Dhoti Set',
         description: 'Traditional silk dhoti set.',
-        price: 3499,
-        imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+        imageUrls: ['assets/images/silk-dhoti-01.jpeg'],
         category: ProductCategory.SilkDhotiSet,
+        variantPrices: [{ price: 3499, quantity: 10 }],
       },
     ]);
     component.product = TestBed.inject(CartService).products()[0];
@@ -42,6 +43,32 @@ describe('ProductDetails', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('lets the user navigate the product image gallery', () => {
+    const rootElement: HTMLElement = fixture.nativeElement;
+    const product = TestBed.inject(CartService).products()[0];
+    component.product = {
+      ...product,
+      imageUrls: ['assets/images/silk-dhoti-01.jpeg', 'assets/images/silk-dhoti-16.jpeg'],
+    };
+    fixture.detectChanges();
+
+    rootElement
+      .querySelector<HTMLButtonElement>('[aria-label="Next product image"]')!
+      .click();
+    fixture.detectChanges();
+
+    expect(component.selectedImageIndex).toBe(1);
+    expect(rootElement.textContent).toContain('2 / 2');
+    expect(rootElement.querySelector<HTMLImageElement>('.product-image')!.src)
+      .toContain('silk-dhoti-16.jpeg');
+
+    rootElement
+      .querySelector<HTMLButtonElement>('[aria-label="Previous product image"]')!
+      .click();
+
+    expect(component.selectedImageIndex).toBe(0);
   });
 
   it('shows product information and lets the user configure the quantity and clothing options', () => {
@@ -54,8 +81,9 @@ describe('ProductDetails', () => {
 
     expect(rootElement.textContent).toContain(product.name);
     expect(rootElement.querySelector<HTMLImageElement>('.product-image')!.src)
-      .toContain(product.imageUrl);
+      .toContain(product.imageUrls[0]);
     expect(rootElement.textContent).toContain('Dhoti size');
+    expect(rootElement.textContent).toContain('Dhoti type');
     expect(rootElement.textContent).toContain('Shirt size');
     expect(rootElement.textContent).toContain('Sleeve length');
 
@@ -70,12 +98,96 @@ describe('ProductDetails', () => {
     expect(rootElement.textContent).toContain('2');
   });
 
+  it('updates the displayed price for the selected shirt and dhoti options', () => {
+    const product = TestBed.inject(CartService).products()[0];
+    component.product = {
+      ...product,
+      variantPrices: [
+        {
+          dhotiSize: DhotiSize.EightMulam,
+          shirtSize: ShirtSize.Medium,
+          sleeveLength: SleeveLength.FullSleeve,
+          dhotiType: DhotiType.WithVelcroPocket,
+          price: 4299,
+          quantity: 5,
+        },
+        {
+          dhotiSize: DhotiSize.EightMulam,
+          shirtSize: ShirtSize.Medium,
+          sleeveLength: SleeveLength.FullSleeve,
+          dhotiType: DhotiType.WithoutVelcroPocket,
+          price: 3999,
+          quantity: 2,
+        },
+      ],
+    };
+    fixture.detectChanges();
+
+    expect(component.selectedPrice).toBe(4299);
+    const rootElement: HTMLElement = fixture.nativeElement;
+    const withoutPocket = Array.from(
+      rootElement.querySelectorAll<HTMLButtonElement>('.option-button'),
+    ).find((button) => button.textContent?.includes(DhotiType.WithoutVelcroPocket));
+    withoutPocket!.click();
+    fixture.detectChanges();
+
+    expect(component.selectedPrice).toBe(3999);
+  });
+
+  it('shows a red low-stock label when three or fewer units remain', () => {
+    component.product = {
+      ...component.product,
+      variantPrices: [
+        {
+          dhotiSize: DhotiSize.EightMulam,
+          shirtSize: ShirtSize.Medium,
+          sleeveLength: SleeveLength.FullSleeve,
+          dhotiType: DhotiType.WithVelcroPocket,
+          price: 4299,
+          quantity: 3,
+        },
+      ],
+    };
+    fixture.detectChanges();
+
+    const stockMessage: HTMLElement =
+      fixture.nativeElement.querySelector('.stock-message');
+    expect(stockMessage.textContent).toContain('Only 3 left');
+    expect(stockMessage.classList).toContain('low-stock');
+
+    component.product = {
+      ...component.product,
+      variantPrices: component.product.variantPrices.map((variant) => ({
+        ...variant,
+        quantity: 4,
+      })),
+    };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.stock-message').textContent)
+      .toContain('4 available');
+    expect(fixture.nativeElement.querySelector('.stock-message').classList)
+      .not.toContain('low-stock');
+  });
+
   it('adds the selected options and quantity to the cart', () => {
     const cartService = TestBed.inject(CartService);
     const product = cartService.products().find(
       (item) => item.category === ProductCategory.SilkDhotiSet,
     )!;
-    component.product = product;
+    component.product = {
+      ...product,
+      variantPrices: [
+        {
+          dhotiSize: DhotiSize.TenMulam,
+          shirtSize: ShirtSize.Medium,
+          sleeveLength: SleeveLength.FullSleeve,
+          dhotiType: DhotiType.WithVelcroPocket,
+          price: 4299,
+          quantity: 3,
+        },
+      ],
+    };
     component.dhotiSize = DhotiSize.TenMulam;
     component.quantity = 3;
 
@@ -87,6 +199,8 @@ describe('ProductDetails', () => {
         id: product.id,
         quantity: 3,
         dhotiSize: DhotiSize.TenMulam,
+        dhotiType: DhotiType.WithVelcroPocket,
+        price: 4299,
         shirtSize: ShirtSize.Medium,
         sleeveLength: SleeveLength.FullSleeve,
       }),
@@ -97,6 +211,31 @@ describe('ProductDetails', () => {
     component.decreaseQuantity();
 
     expect(component.quantity).toBe(1);
+  });
+
+  it('limits cart quantity to the selected variant stock', () => {
+    component.product = {
+      ...component.product,
+      variantPrices: [
+        {
+          dhotiSize: DhotiSize.EightMulam,
+          dhotiType: DhotiType.WithVelcroPocket,
+          shirtSize: ShirtSize.Medium,
+          sleeveLength: SleeveLength.FullSleeve,
+          price: 4299,
+          quantity: 1,
+        },
+      ],
+    };
+
+    expect(component.remainingQuantity).toBe(1);
+    component.increaseQuantity();
+    expect(component.quantity).toBe(1);
+
+    component.addToCart();
+
+    expect(TestBed.inject(CartService).cartItems()[0].quantity).toBe(1);
+    expect(component.remainingQuantity).toBe(0);
   });
 
   afterEach(() => {

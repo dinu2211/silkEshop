@@ -14,9 +14,9 @@ describe('ViewCart', () => {
       id: 'silk-dhoti-01',
       name: 'Kanchipuram Silk Dhoti - Gold Zari Border',
       description: 'Traditional cream silk dhoti with an elegant gold zari border.',
-      price: 3499,
-      imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+      imageUrls: ['assets/images/silk-dhoti-01.jpeg'],
       category: ProductCategory.SilkDhoti,
+      variantPrices: [{ price: 3499, quantity: 5 }],
     },
   ];
 
@@ -41,7 +41,7 @@ describe('ViewCart', () => {
   it('shows selected products and updates their quantity', () => {
     const cartService = TestBed.inject(CartService);
     const product = cartService.products()[0];
-    cartService.addToCart(product);
+    cartService.addToCart({ ...product, price: product.variantPrices[0].price });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain(product.name);
@@ -57,7 +57,7 @@ describe('ViewCart', () => {
   it('removes a product from the cart', () => {
     const cartService = TestBed.inject(CartService);
     const product = cartService.products()[0];
-    cartService.addToCart(product);
+    cartService.addToCart({ ...product, price: product.variantPrices[0].price });
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector(

@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.update-admin-order-status]
 verify_jwt = false
+
+[functions.manage-product-images]
+verify_jwt = false

@@ -184,7 +184,7 @@
           </div>
 
           <ul class="order-items">
-            @for (item of cartService.cartItems(); track item.id) {
+            @for (item of cartService.cartItems(); track item.variantKey ?? item.id) {
               <li class="order-item">
                 @if (item.imageUrl) {
                   <img [src]="item.imageUrl" [alt]="item.name" />
@@ -196,6 +196,17 @@
                 <div class="item-copy">
                   <h3>{{ item.name }}</h3>
                   <p>Qty {{ item.quantity }} <span aria-hidden="true">·</span> {{ item.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+                  @if (item.dhotiSize || item.dhotiType || item.shirtSize || item.sleeveLength) {
+                    <p class="item-options">
+                      @if (item.dhotiSize) { Dhoti: {{ item.dhotiSize }} }
+                      @if (item.dhotiType) { · {{ item.dhotiType }} }
+                      @if (item.shirtSize) { · Shirt: {{ item.shirtSize }} }
+                      @if (item.sleeveLength) { · {{ item.sleeveLength }} }
+                    </p>
+                  }
+                  @if (item.idealFor) {
+                    <p class="item-options">Ideal for {{ item.idealFor }}</p>
+                  }
                 </div>
                 <strong>{{ item.price * item.quantity | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
               </li>

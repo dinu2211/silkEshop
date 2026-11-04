@@ -12,9 +12,57 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-The product list is loaded from the backend `GET /api/products` endpoint. The Angular
-development server proxies `/api` to `http://localhost:8080`; start the Spring Boot backend
-on that port while developing the frontend.
+The home page loads the catalog from the public Supabase `products` table. The Angular
+`ProductService` also requests the backend `GET /api/products` endpoint; the development server
+proxies `/api` to `http://localhost:8080`, so start the Spring Boot backend on that port while
+developing the frontend.
+
+## Product collections, variants, and inventory
+
+Apply `supabase/migrations/20261103000000_add_product_collections_and_variant_prices.sql` to add
+the product `collection`, `idealFor`, and `variantPrices` fields. Assign each product a collection
+such as `Wedding` or `Silk Collection`; existing products are left unassigned until classified.
+The home page filters by collection and displays `idealFor` as a product label. Apply
+`supabase/migrations/20261103000001_add_admin_product_management.sql` and
+`supabase/migrations/20261103000002_move_product_price_and_stock_to_variants.sql` after the product
+collections migration and custom-admin-login migration. The `/manage-products` page uses the same
+administrator sign-in as `/view-order` and supports adding and updating catalog details, collections,
+and each variant's price and available quantity. The latter migration moves existing product prices
+into option variants with zero stock; set quantities in product management to make products
+available. Products appear on the home page only when at least one matching variant has stock.
+
+Each `variantPrices` entry contains a price and available quantity for one exact option combination.
+Include every option shown for the product category:
+
+```json
+[
+  {
+    "dhotiSize": "8 Mulam",
+    "shirtSize": "Medium",
+    "sleeveLength": "Full Sleeve",
+    "dhotiType": "With Velcro Pocket",
+    "price": 4299,
+    "quantity": 5
+  }
+]
+```
+
+The selected variant determines the price and available stock.
+`idealFor` is descriptive and is not a selectable option.
+
+Apply `supabase/migrations/20261103000003_add_product_image_gallery.sql` after the product
+management and variant inventory migrations. It migrates each current `imageUrl` to `imageUrls`,
+creates the public `product-images` Storage bucket, and updates the product save RPC. Product images
+can be JPEG, PNG, or WebP (up to 5 MB each, six per product). Deploy the protected image function
+so only users with a valid `/manage-products` administrator session can upload or delete images:
+
+```bash
+npx supabase functions deploy manage-product-images --project-ref krrsrzekaxqfmxfbmlnd
+```
+
+The first image is used on the home page and as the product's cart image; product details provides
+thumbnails and previous/next controls for the full gallery. Public bucket access is required for
+customers to view catalog images.
 
 ## Razorpay payments
 
@@ -61,18 +109,31 @@ Apply the WhatsApp consent migration after the existing order-management migrati
 optionally opt in at checkout; only opted-in customers receive a message when an order changes from
 `pending` to `confirmed`, whether payment verification or an administrator performs the transition.
 Create and approve a WhatsApp message template named
-`order_confirmed` with the body `Your order is confirmed. Your order ID is {{1}}.` in the language
-configured below. The WhatsApp Business sender must be registered with Meta Cloud API. The business
-phone number `8667218771` is the sender identity; Meta's phone-number ID and a permanent access token
-are separate values and must be obtained from the WhatsApp business account.
+`order_confirmed` with the body `Your order is confirmed. Your order ID is {{1}}.`. Configure the
+exact language code of the approved template translation (for example, `en_US` or `en_GB`); the
+template name and language must both exist in the WhatsApp Business Account associated with the
+sender's phone-number ID. The WhatsApp Business sender must be registered with Meta Cloud API. The
+business phone number `8667218771` is the sender identity; Meta's phone-number ID and a permanent
+access token are separate values and must be obtained from the WhatsApp business account.
+
+For Meta's sample `hello_world` template, set `WHATSAPP_ORDER_CONFIRMED_TEMPLATE="hello_world"` and
+`WHATSAPP_TEMPLATE_LANGUAGE="en_US"`. That sample has no parameters, so it sends its fixed greeting
+without the order ID. The `order_confirmed` template above expects one body parameter for the order
+ID.
 
 Configure the Edge Function secrets on the server, using the API version currently supported by
 your Meta app and the phone-number ID shown in WhatsApp Manager:
 
 ```bash
-npx supabase secrets set WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id" WHATSAPP_ACCESS_TOKEN="your_access_token" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en" WHATSAPP_API_VERSION="v25.0" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase secrets set WHATSAPP_PHONE_NUMBER_ID="your_phone_number_id" WHATSAPP_ACCESS_TOKEN="your_access_token" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="your_exact_template_language_code" WHATSAPP_API_VERSION="v25.0" --project-ref krrsrzekaxqfmxfbmlnd
 npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy verify-razorpay-payment --project-ref krrsrzekaxqfmxfbmlnd
 ```
+
+For error `132001`, check that the template name is exactly `order_confirmed`, that its translation
+is approved in the configured language, and that it belongs to the same WhatsApp Business Account
+as `WHATSAPP_PHONE_NUMBER_ID`. Then set `WHATSAPP_TEMPLATE_LANGUAGE` to that translation's exact
+language code and redeploy the function.
 
 Delivery errors do not undo the order status update; the admin page reports when confirmation could
 not be sent. Messages are sent through Meta's approved template API.

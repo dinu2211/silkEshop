@@ -12,9 +12,9 @@ describe('CartService', () => {
       id: 'silk-dhoti-01',
       name: 'Kanchipuram Silk Dhoti - Gold Zari Border',
       description: 'Traditional cream silk dhoti with an elegant gold zari border.',
-      price: 3499,
-      imageUrl: 'assets/images/silk-dhoti-01.jpeg',
+      imageUrls: ['assets/images/silk-dhoti-01.jpeg'],
       category: ProductCategory.SilkDhoti,
+      variantPrices: [{ price: 3499, quantity: 5 }],
     },
   ];
 
@@ -56,8 +56,9 @@ describe('CartService', () => {
   it('keeps differently sized product variants separate in the cart', () => {
     const product = service.products()[0];
 
-    service.addToCart({ ...product, dhotiSize: DhotiSize.EightMulam }, 2);
-    service.addToCart({ ...product, dhotiSize: DhotiSize.TenMulam });
+    const cartProduct = { ...product, price: 3499 };
+    service.addToCart({ ...cartProduct, dhotiSize: DhotiSize.EightMulam }, 2);
+    service.addToCart({ ...cartProduct, dhotiSize: DhotiSize.TenMulam });
 
     expect(service.cartItems()).toHaveSize(2);
     expect(service.quantityFor(product.id)).toBe(3);
@@ -72,6 +73,16 @@ describe('CartService', () => {
     service.removeFromCart(largerSize.variantKey!);
     expect(service.cartItems()).toHaveSize(1);
     expect(service.cartItems()[0].dhotiSize).toBe(DhotiSize.EightMulam);
+  });
+
+  it('does not let cart quantities exceed variant stock', () => {
+    const product = service.products()[0];
+
+    service.addToCart({ ...product, price: 3499, stockQuantity: 2 }, 3);
+
+    expect(service.cartItems()[0].quantity).toBe(2);
+    service.increaseQuantity(service.cartItems()[0].variantKey!);
+    expect(service.cartItems()[0].quantity).toBe(2);
   });
 
   afterEach(() => {

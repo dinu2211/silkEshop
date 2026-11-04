@@ -7,6 +7,30 @@ interface OrderNotificationRecord {
 
 export type OrderConfirmationResult = 'sent' | 'not_opted_in';
 
+function graphErrorDetails(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null || !('error' in body)) {
+    return null;
+  }
+  const error = body.error;
+  if (
+    typeof error !== 'object' ||
+    error === null ||
+    !('message' in error) ||
+    typeof error.message !== 'string'
+  ) {
+    return null;
+  }
+
+  const codes: string[] = [];
+  if ('code' in error && typeof error.code === 'number') {
+    codes.push(`code ${error.code}`);
+  }
+  if ('error_subcode' in error && typeof error.error_subcode === 'number') {
+    codes.push(`subcode ${error.error_subcode}`);
+  }
+  return [...codes, error.message].join(': ');
+}
+
 function requiredEnvironment(name: string): string {
   const value = Deno.env.get(name);
   if (!value) {
@@ -65,7 +89,16 @@ export async function sendOrderConfirmation(
   const phoneNumberId = requiredEnvironment('WHATSAPP_PHONE_NUMBER_ID');
   const accessToken = requiredEnvironment('WHATSAPP_ACCESS_TOKEN');
   const templateName = requiredEnvironment('WHATSAPP_ORDER_CONFIRMED_TEMPLATE');
-  const languageCode = Deno.env.get('WHATSAPP_TEMPLATE_LANGUAGE') || 'en';
+  const languageCode = requiredEnvironment('WHATSAPP_TEMPLATE_LANGUAGE');
+  const components =
+    templateName === 'hello_world'
+      ? undefined
+      : [
+          {
+            type: 'body',
+            parameters: [{ type: 'text', text: order.id }],
+          },
+        ];
   const url = new URL(
     `/${apiVersion}/${encodeURIComponent(phoneNumberId)}/messages`,
     'https://graph.facebook.com',
@@ -84,17 +117,16 @@ export async function sendOrderConfirmation(
       template: {
         name: templateName,
         language: { code: languageCode },
-        components: [
-          {
-            type: 'body',
-            parameters: [{ type: 'text', text: order.id }],
-          },
-        ],
+        ...(components ? { components } : {}),
       },
     }),
   });
   if (!response.ok) {
-    throw new Error(`WhatsApp Cloud API rejected the message (HTTP ${response.status}).`);
+    const errorBody: unknown = await response.json().catch(() => null);
+    const details = graphErrorDetails(errorBody);
+    throw new Error(
+      `WhatsApp Cloud API rejected the message (HTTP ${response.status})${details ? `: ${details}` : '.'}`,
+    );
   }
 
   return 'sent';

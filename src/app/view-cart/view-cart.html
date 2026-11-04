@@ -44,12 +44,16 @@
               <div class="product-details">
                 <h3>{{ item.name }}</h3>
                 <p class="product-price">{{ item.price | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
-                @if (item.dhotiSize || item.shirtSize || item.sleeveLength) {
+                @if (item.dhotiSize || item.dhotiType || item.shirtSize || item.sleeveLength) {
                   <p class="product-options">
                     @if (item.dhotiSize) { Dhoti: {{ item.dhotiSize }} }
+                    @if (item.dhotiType) { · {{ item.dhotiType }} }
                     @if (item.shirtSize) { · Shirt: {{ item.shirtSize }} }
                     @if (item.sleeveLength) { · {{ item.sleeveLength }} }
                   </p>
+                }
+                @if (item.idealFor) {
+                  <p class="product-options">Ideal for {{ item.idealFor }}</p>
                 }
                 <div class="item-controls">
                   <div class="quantity-control" [attr.aria-label]="'Quantity: ' + item.quantity">
@@ -66,6 +70,7 @@
                       class="icon-button quantity-button"
                       type="button"
                       [attr.aria-label]="'Increase quantity of ' + item.name"
+                      [disabled]="item.stockQuantity !== undefined && item.quantity >= item.stockQuantity"
                       (click)="cartService.increaseQuantity(item.variantKey ?? item.id)"
                     >
                       <mat-icon>add</mat-icon>

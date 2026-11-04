@@ -1,0 +1,361 @@
+<main class="products-page">
+  <div class="products-shell">
+    <a class="back-link" routerLink="/">
+      <span aria-hidden="true">←</span>
+      Continue shopping
+    </a>
+
+    @if (isCheckingSession()) {
+      <p class="page-message" role="status">Checking administrator access…</p>
+    } @else if (!isAdmin()) {
+      <section class="sign-in-card" aria-labelledby="sign-in-title">
+        <p class="eyebrow">WEAVE MADE · STAFF</p>
+        <h1 id="sign-in-title">Product management</h1>
+        <p class="intro">Sign in with the administrator account used for order management.</p>
+        <form class="sign-in-form" (ngSubmit)="signIn()">
+          <label class="field">
+            <span>Admin user ID</span>
+            <input
+              type="text"
+              name="userId"
+              [(ngModel)]="userId"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          @if (errorMessage()) {
+            <p class="error-message" role="alert">{{ errorMessage() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="isSigningIn()">
+            {{ isSigningIn() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      </section>
+    } @else {
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">WEAVE MADE · STAFF</p>
+          <h1>Product management</h1>
+          <p>Add new pieces or update the details shown in your shop.</p>
+        </div>
+        <div class="heading-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isLoadingProducts() || isSaving()"
+            (click)="loadProducts()"
+          >
+            Refresh
+          </button>
+          <button class="text-button" type="button" (click)="signOut()">Sign out</button>
+        </div>
+      </header>
+
+      @if (errorMessage()) {
+        <p class="error-message page-alert" role="alert">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="success-message page-alert" role="status">{{ successMessage() }}</p>
+      }
+
+      @if (isEditorOpen()) {
+        <section class="editor-card" aria-labelledby="editor-title">
+          <header class="editor-heading">
+            <div>
+              <p class="eyebrow">{{ editingProductId() ? 'EDIT PRODUCT' : 'NEW LISTING' }}</p>
+              <h2 id="editor-title">{{ editingProductId() ? 'Update product' : 'Add a product' }}</h2>
+            </div>
+            <button class="text-button" type="button" (click)="closeEditor()">Close</button>
+          </header>
+
+          <form class="product-form" (ngSubmit)="saveProduct()">
+            <div class="form-grid">
+              <label class="field field-wide">
+                <span>Product name</span>
+                <input type="text" name="name" [(ngModel)]="draft.name" required maxlength="160" />
+              </label>
+              <label class="field field-wide">
+                <span>Description</span>
+                <textarea
+                  name="description"
+                  [(ngModel)]="draft.description"
+                  rows="3"
+                  required
+                  maxlength="2000"
+                ></textarea>
+              </label>
+              <label class="field">
+                <span>Category</span>
+                <select name="category" [(ngModel)]="draft.category" required>
+                  @for (category of categories; track category) {
+                    <option [value]="category">{{ category }}</option>
+                  }
+                </select>
+              </label>
+              <section class="image-editor field-wide" aria-labelledby="images-heading">
+                <div class="image-editor-heading">
+                  <div>
+                    <span id="images-heading">Product images</span>
+                    <p>Upload up to 6 JPEG, PNG, or WebP images. The first is the main image.</p>
+                  </div>
+                  <label class="secondary-button upload-button">
+                    {{ isUploadingImages() ? 'Uploading…' : 'Choose images' }}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      [disabled]="isUploadingImages() || draft.images.length >= 6"
+                      (change)="selectImages($event)"
+                    />
+                  </label>
+                </div>
+                @if (draft.images.length) {
+                  <div class="image-preview-list">
+                    @for (image of draft.images; track image.url; let index = $index) {
+                      <article class="image-preview">
+                        <img [src]="image.url" [alt]="'Product image ' + (index + 1)" />
+                        <span class="image-order">
+                          {{ index === 0 ? 'Main image' : 'Image ' + (index + 1) }}
+                        </span>
+                        <div class="image-actions">
+                          <button
+                            type="button"
+                            [disabled]="index === 0"
+                            [attr.aria-label]="'Move image ' + (index + 1) + ' earlier'"
+                            (click)="moveImage(index, -1)"
+                          >
+                            ←
+                          </button>
+                          <button
+                            type="button"
+                            [disabled]="index === draft.images.length - 1"
+                            [attr.aria-label]="'Move image ' + (index + 1) + ' later'"
+                            (click)="moveImage(index, 1)"
+                          >
+                            →
+                          </button>
+                          <button
+                            type="button"
+                            [attr.aria-label]="'Remove image ' + (index + 1)"
+                            (click)="removeImage(index)"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <p class="no-variants">Add at least one product image.</p>
+                }
+              </section>
+              <label class="field">
+                <span>Collection</span>
+                <select name="collection" [(ngModel)]="draft.collection">
+                  <option value="">Not assigned</option>
+                  @for (collection of collections; track collection) {
+                    <option [value]="collection">{{ collection }}</option>
+                  }
+                </select>
+              </label>
+              <label class="field">
+                <span>Ideal for</span>
+                <select name="idealFor" [(ngModel)]="draft.idealFor">
+                  <option value="">Not specified</option>
+                  @for (option of idealForOptions; track option) {
+                    <option [value]="option">{{ option }}</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <section class="variant-section" aria-labelledby="variant-heading">
+              <div class="variant-heading">
+                <div>
+                  <h3 id="variant-heading">Variants &amp; inventory</h3>
+                  <p>Set the price and available quantity for each option combination.</p>
+                </div>
+                <button class="secondary-button" type="button" (click)="addVariantPrice()">
+                  Add variant
+                </button>
+              </div>
+              @for (variant of draft.variantPrices; track $index; let index = $index) {
+                <div class="variant-row">
+                  @if (showsDhotiOptions) {
+                    <label class="field">
+                      <span>Dhoti size</span>
+                      <select [name]="'dhotiSize' + index" [(ngModel)]="variant.dhotiSize" required>
+                        @for (size of dhotiSizes; track size) {
+                          <option [value]="size">{{ size }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Dhoti type</span>
+                      <select [name]="'dhotiType' + index" [(ngModel)]="variant.dhotiType" required>
+                        @for (type of dhotiTypes; track type) {
+                          <option [value]="type">{{ type }}</option>
+                        }
+                      </select>
+                    </label>
+                  }
+                  @if (showsShirtOptions) {
+                    <label class="field">
+                      <span>Shirt size</span>
+                      <select [name]="'shirtSize' + index" [(ngModel)]="variant.shirtSize" required>
+                        @for (size of shirtSizes; track size) {
+                          <option [value]="size">{{ size }}</option>
+                        }
+                      </select>
+                    </label>
+                    <label class="field">
+                      <span>Sleeve length</span>
+                      <select [name]="'sleeveLength' + index" [(ngModel)]="variant.sleeveLength" required>
+                        @for (sleeve of sleeveLengths; track sleeve) {
+                          <option [value]="sleeve">{{ sleeve }}</option>
+                        }
+                      </select>
+                    </label>
+                  }
+                  <label class="field">
+                    <span>Price (₹)</span>
+                    <input
+                      type="number"
+                      [name]="'variantPrice' + index"
+                      [(ngModel)]="variant.price"
+                      min="0"
+                      step="1"
+                      required
+                    />
+                  </label>
+                  <label class="field">
+                    <span>Available quantity</span>
+                    <input
+                      type="number"
+                      [name]="'variantQuantity' + index"
+                      [(ngModel)]="variant.quantity"
+                      min="0"
+                      step="1"
+                      required
+                    />
+                  </label>
+                  <button
+                    class="remove-button"
+                    type="button"
+                    [attr.aria-label]="'Remove variant ' + (index + 1)"
+                    (click)="removeVariantPrice(index)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              } @empty {
+                <p class="no-variants">Add a variant with its own price and quantity.</p>
+              }
+            </section>
+
+            <div class="form-actions">
+              <button class="secondary-button" type="button" (click)="closeEditor()">Cancel</button>
+              <button
+                class="primary-button"
+                type="submit"
+                [disabled]="isSaving() || isUploadingImages()"
+              >
+                {{
+                  isUploadingImages()
+                    ? 'Uploading images…'
+                    : isSaving()
+                      ? 'Saving…'
+                      : editingProductId()
+                        ? 'Save changes'
+                        : 'Add product'
+                }}
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <section class="catalog-section" aria-labelledby="catalog-heading">
+        <div class="catalog-heading">
+          <div>
+            <p class="eyebrow">YOUR CATALOG</p>
+            <h2 id="catalog-heading">Products <span>{{ products().length }}</span></h2>
+          </div>
+          <button class="primary-button" type="button" (click)="startNewProduct()">
+            <span aria-hidden="true">+</span> Add product
+          </button>
+        </div>
+        <label class="search-field">
+          <span class="visually-hidden">Search products</span>
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            name="searchProducts"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            placeholder="Search by name, category, or ID"
+          />
+        </label>
+
+        @if (isLoadingProducts() && products().length === 0) {
+          <p class="page-message" role="status">Loading products…</p>
+        } @else if (filteredProducts().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">✦</span>
+            <h3>{{ searchTerm() ? 'No matching products' : 'Your catalog is ready' }}</h3>
+            <p>
+              {{ searchTerm() ? 'Try another search.' : 'Add a product to get your collection started.' }}
+            </p>
+          </div>
+        } @else {
+          <div class="product-list" aria-label="Products">
+            @for (product of filteredProducts(); track product.id) {
+              <article class="product-card">
+                <div class="product-image">
+                  <img
+                    [src]="product.imageUrls[0]"
+                    [alt]="product.name"
+                  />
+                </div>
+                <div class="product-details">
+                  <div class="product-tags">
+                    <span>{{ product.category }}</span>
+                    @if (product.collection) {
+                      <span>{{ product.collection }}</span>
+                    }
+                  </div>
+                  <h3>{{ product.name }}</h3>
+                  <p class="product-description">{{ product.description }}</p>
+                  <p class="product-id">ID · {{ product.id }}</p>
+                </div>
+                <div class="product-price">
+                  <strong>From {{ startingPrice(product) | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+                  <span>{{ totalQuantity(product) }} in stock · {{ product.variantPrices.length }} variant(s)</span>
+                </div>
+                <span class="image-count">{{ product.imageUrls.length }} images</span>
+                <button
+                  class="primary-button edit-button"
+                  type="button"
+                  [attr.aria-label]="'Edit ' + product.name"
+                  (click)="editProduct(product)"
+                >
+                  Edit
+                </button>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    }
+  </div>
+</main>

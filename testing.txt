@@ -1,0 +1,26 @@
+npx supabase secrets set WHATSAPP_API_VERSION="v25.0" WHATSAPP_PHONE_NUMBER_ID="1398757973321700"  WHATSAPP_TEMPLATE_LANGUAGE="en_US" WHATSAPP_ACCESS_TOKEN="<REPLACE_WITH_NEW_TOKEN>" WHATSAPP_ORDER_CONFIRMED_TEMPLATE="hello_world" WHATSAPP_TEMPLATE_LANGUAGE="en_US" --project-ref krrsrzekaxqfmxfbmlnd
+
+npx supabase functions deploy create-razorpay-order --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy verify-razorpay-payment --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy get-order-payment-status --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+
+
+
+
+
+npx supabase secrets set WHATSAPP_TEMPLATE_LANGUAGE="en_US" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+
+
+
+
+
+npx supabase secrets set WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en_US" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy verify-razorpay-payment --project-ref krrsrzekaxqfmxfbmlnd
+
+
+npx supabase secrets set WHATSAPP_ORDER_CONFIRMED_TEMPLATE="order_confirmed" WHATSAPP_TEMPLATE_LANGUAGE="en" --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy update-admin-order-status --project-ref krrsrzekaxqfmxfbmlnd
+npx supabase functions deploy verify-razorpay-payment --project-ref krrsrzekaxqfmxfbmlnd

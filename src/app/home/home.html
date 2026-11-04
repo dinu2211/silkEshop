@@ -4,31 +4,48 @@
     <summary class="category-toggle">
       <span class="category-heading">
         <span class="category-eyebrow">Find your style</span>
-        <span class="category-title" id="category-heading">Shop by category</span>
+        <span class="category-title" id="category-heading">Shop by collection</span>
       </span>
-      <span class="category-current">{{ selectedCategory ?? 'All categories' }}</span>
+      <span class="category-current">
+        {{
+          selectedCollection === 'unassigned'
+            ? 'Collection not set'
+            : selectedCollection ?? 'All collections'
+        }}
+      </span>
       <span class="category-chevron" aria-hidden="true"></span>
     </summary>
     <div class="category-panel" role="group" aria-labelledby="category-heading">
       <button
         type="button"
         class="categoryButton"
-        [class.selected]="selectedCategory === null"
-        [attr.aria-pressed]="selectedCategory === null"
-        (click)="selectCategory(null)"
+        [class.selected]="selectedCollection === null"
+        [attr.aria-pressed]="selectedCollection === null"
+        (click)="selectCollection(null)"
       >
-        All categories
+        All collections
       </button>
       <button
-        *ngFor="let category of categories"
+        *ngFor="let collection of collections"
         type="button"
         class="categoryButton"
-        [class.selected]="selectedCategory === category"
-        [attr.aria-pressed]="selectedCategory === category"
-        (click)="selectCategory(category)"
+        [class.selected]="selectedCollection === collection"
+        [attr.aria-pressed]="selectedCollection === collection"
+        (click)="selectCollection(collection)"
       >
-        {{ category }}
+        {{ collection }}
       </button>
+      @if (hasUnassignedProducts) {
+        <button
+          type="button"
+          class="categoryButton"
+          [class.selected]="selectedCollection === 'unassigned'"
+          [attr.aria-pressed]="selectedCollection === 'unassigned'"
+          (click)="selectCollection('unassigned')"
+        >
+          Collection not set
+        </button>
+      }
     </div>
   </details>
   <div class="row">
@@ -45,22 +62,32 @@
       <button type="button" (click)="loadProducts()">Try again</button>
     </div>
   }
+  @if (!loading() && !error() && filteredProducts.length === 0) {
+    <p role="status">No products in this collection yet.</p>
+  }
   <div class="row">
     <div class="col-md-3 mb-3" *ngFor="let product of filteredProducts">
       <mat-card class="example-card">
         <div class="product-image-panel">
-          @if (product.imageUrl) {
-            <img class="product-image" [src]="product.imageUrl" [alt]="product.name" />
+          @if (product.imageUrls[0]) {
+            <img class="product-image" [src]="product.imageUrls[0]" [alt]="product.name" />
           } @else {
             <div class="image-placeholder" aria-hidden="true">Image unavailable</div>
           }
         </div>
         <mat-card-content class="product-content">
+          <p class="product-collection">{{ product.collection ?? 'Collection not set' }}</p>
           <p class="product-category">{{ product.category }}</p>
           <h3>{{ product.name }}</h3>
           <p class="product-description">{{ product.description }}</p>
+          @if (product.idealFor) {
+            <p class="product-ideal-for">Ideal for {{ product.idealFor }}</p>
+          }
           <div class="product-purchase">
-            <strong>{{ product.price | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            <strong>
+              @if (product.variantPrices.length > 1) { From }
+              {{ startingPrice(product) | currency: 'INR' : 'symbol' : '1.0-0' }}
+            </strong>
             <button
               type="button"
               class="add-to-cart"

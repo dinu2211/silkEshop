@@ -11,40 +11,99 @@ export enum ProductCategory {
   PlainShirt = 'Plain Shirt',
   SilkMaterialCombo = 'Silk Material Combo',
 }
-  export enum SleeveLength {
-    FullSleeve = 'Full Sleeve',
-    HalfSleeve = 'Half Sleeve',
-    ThreeQuarterSleeve = 'Three Quarter Sleeve',
-  }
-  export enum ShirtSize {
-    Small = 'Small',
-    Medium = 'Medium',
-    Large = 'Large',
-    ExtraLarge = 'Extra Large',
-  }
-  
-  export enum DhotiSize {
-    EightMulam = '8 Mulam',
-    NineMulam = '9 Mulam',
-    TenMulam = '10 Mulam',
-  }
+
+export const DHOTI_OPTION_CATEGORIES: readonly ProductCategory[] = [
+  ProductCategory.SilkDhoti,
+  ProductCategory.PlainDhoti,
+  ProductCategory.SilkDhotiSet,
+  ProductCategory.PlainDhotiSet,
+  ProductCategory.ComboSet,
+  ProductCategory.SilkMaterialCombo,
+];
+
+export const SHIRT_OPTION_CATEGORIES: readonly ProductCategory[] = [
+  ProductCategory.SilkDhotiSet,
+  ProductCategory.PlainDhotiSet,
+  ProductCategory.ComboSet,
+  ProductCategory.SilkShirt,
+  ProductCategory.PlainShirt,
+  ProductCategory.SilkMaterialCombo,
+];
+
+export enum ProductCollection {
+  Function = 'Function',
+  Wedding = 'Wedding',
+  PartyWear = 'Party Wear',
+  Engagement = 'Engagement',
+  SummerSpecial = 'Summer Special',
+  ArtSilk = 'Art Silk',
+  SetDress = 'Set Dress',
+  TissueCollection = 'Tissue Collection',
+  RoyalTissue = 'Royal Tissue',
+  SilkCollection = 'Silk Collection',
+}
+
+export enum ProductIdealFor {
+  Kid = 'Kid',
+  Men = 'Men',
+  DadSonCombo = 'Dad & Son Combo',
+}
+
+export enum DhotiType {
+  WithVelcroPocket = 'With Velcro Pocket',
+  WithoutVelcroPocket = 'Without Velcro Pocket',
+}
+
+export enum SleeveLength {
+  FullSleeve = 'Full Sleeve',
+  HalfSleeve = 'Half Sleeve',
+  ThreeQuarterSleeve = 'Three Quarter Sleeve',
+}
+
+export enum ShirtSize {
+  Small = 'Small',
+  Medium = 'Medium',
+  Large = 'Large',
+  ExtraLarge = 'Extra Large',
+}
+
+export enum DhotiSize {
+  EightMulam = '8 Mulam',
+  NineMulam = '9 Mulam',
+  TenMulam = '10 Mulam',
+}
+
+export interface ProductVariantPrice {
+  dhotiSize?: DhotiSize;
+  shirtSize?: ShirtSize;
+  sleeveLength?: SleeveLength;
+  dhotiType?: DhotiType;
+  price: number;
+  quantity: number;
+}
+
 export interface CartItem {
   id: string;
   variantKey?: string;
   name: string;
   price: number;
   quantity: number;
+  stockQuantity?: number;
   imageUrl?: string;
   category?: ProductCategory;
+  collection?: ProductCollection | null;
+  idealFor?: ProductIdealFor | null;
   dhotiSize?: DhotiSize;
-  sleeveLength?: SleeveLength; // Optional sleeve length for shirts
-  shirtSize?: ShirtSize; // Optional shirt size for shirts
+  dhotiType?: DhotiType;
+  sleeveLength?: SleeveLength;
+  shirtSize?: ShirtSize;
 }
 
-export interface Product extends Omit<CartItem, 'quantity' | 'category'> {
+export interface Product extends Omit<CartItem, 'quantity' | 'category' | 'price' | 'stockQuantity'> {
   description: string;
   category: ProductCategory;
-  quantity?: number; // Optional quantity for display purposes
+  variantPrices: ProductVariantPrice[];
+  imageUrls: string[];
 }
 
 
@@ -68,19 +127,54 @@ export class CartService {
       .reduce((quantity, item) => quantity + item.quantity, 0);
   }
 
+  quantityForVariant(
+    product: Pick<CartItem, 'id' | 'dhotiSize' | 'shirtSize' | 'sleeveLength' | 'dhotiType'>,
+  ): number {
+    const variantKey = this.variantKeyFor(product);
+    return this.cartItems()
+      .filter((item) => this.variantKeyFor(item) === variantKey)
+      .reduce((quantity, item) => quantity + item.quantity, 0);
+  }
+
   increaseQuantity(productId: string): void {
     this.cartItems.update((items) => {
       const existingItem = items.find(
         (item) => item.variantKey === productId || (item.id === productId && !item.variantKey),
       );
       if (existingItem) {
+        if (
+          existingItem.stockQuantity !== undefined &&
+          existingItem.quantity >= existingItem.stockQuantity
+        ) {
+          return items;
+        }
         return items.map((item) =>
           item === existingItem ? { ...item, quantity: item.quantity + 1 } : item,
         );
       }
 
       const product = this.products().find((item) => item.id === productId);
-      return product ? [...items, { ...product, quantity: 1 }] : items;
+      const variant = product?.variantPrices?.find((item) => item.quantity > 0);
+      return product && variant
+        ? [
+            ...items,
+            {
+              id: product.id,
+              name: product.name,
+              price: variant.price,
+              quantity: 1,
+              stockQuantity: variant.quantity,
+              imageUrl: product.imageUrls[0] ?? product.imageUrl,
+              category: product.category,
+              collection: product.collection,
+              idealFor: product.idealFor,
+              dhotiSize: variant.dhotiSize,
+              dhotiType: variant.dhotiType,
+              shirtSize: variant.shirtSize,
+              sleeveLength: variant.sleeveLength,
+            },
+          ]
+        : items;
     });
   }
 
@@ -113,22 +207,35 @@ export class CartService {
     this.cartItems.update((items) => {
       const existing = items.find((item) => this.variantKeyFor(item) === variantKey);
       if (existing) {
+        const nextQuantity = existing.quantity + quantity;
+        const maxQuantity = product.stockQuantity ?? Number.POSITIVE_INFINITY;
         return items.map((item) =>
-          item === existing ? { ...item, quantity: item.quantity + quantity } : item,
+          item === existing
+            ? {
+                ...item,
+                ...product,
+                quantity: Math.min(nextQuantity, maxQuantity),
+              }
+            : item,
         );
       }
-      return [...items, { ...product, variantKey, quantity }];
+      const maxQuantity = product.stockQuantity ?? Number.POSITIVE_INFINITY;
+      const availableQuantity = Math.min(quantity, maxQuantity);
+      return availableQuantity > 0
+        ? [...items, { ...product, variantKey, quantity: availableQuantity }]
+        : items;
     });
   }
 
   private variantKeyFor(
-    product: Pick<CartItem, 'id' | 'dhotiSize' | 'shirtSize' | 'sleeveLength'>,
+    product: Pick<CartItem, 'id' | 'dhotiSize' | 'shirtSize' | 'sleeveLength' | 'dhotiType'>,
   ): string {
     return [
       product.id,
       product.dhotiSize ?? '',
       product.shirtSize ?? '',
       product.sleeveLength ?? '',
+      product.dhotiType ?? '',
     ].join(':');
   }
 }

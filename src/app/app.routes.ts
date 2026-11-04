@@ -17,6 +17,9 @@ export const routes: Routes = [{
   path: 'view-order',
   loadComponent: () => import('./view-order/view-order').then(m => m.ViewOrder)
 }, {
+  path: 'manage-products',
+  loadComponent: () => import('./manage-products/manage-products').then(m => m.ManageProducts)
+}, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
 }, {

@@ -1,16 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
-import type { CartItem, ProductCategory } from '../cart-service';
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  category: ProductCategory;
-}
+import type { CartItem, Product } from '../cart-service';
 
 export type NewProduct = Omit<Product, 'id'> & { id?: string };
 export type ProductUpdate = Partial<Omit<Product, 'id'>>;
@@ -124,6 +115,41 @@ function isOrderStatus(value: unknown): value is OrderStatus {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
+}
+
+function isProductVariant(value: unknown): value is Product['variantPrices'][number] {
+  return (
+    isRecord(value) &&
+    typeof value['price'] === 'number' &&
+    Number.isSafeInteger(value['price']) &&
+    value['price'] >= 0 &&
+    typeof value['quantity'] === 'number' &&
+    Number.isSafeInteger(value['quantity']) &&
+    value['quantity'] >= 0 &&
+    ['dhotiSize', 'shirtSize', 'sleeveLength', 'dhotiType'].every(
+      (key) => value[key] === undefined || typeof value[key] === 'string',
+    )
+  );
+}
+
+function isProduct(value: unknown): value is Product {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['name'] === 'string' &&
+    typeof value['description'] === 'string' &&
+    Array.isArray(value['imageUrls']) &&
+    value['imageUrls'].length >= 1 &&
+    value['imageUrls'].length <= 6 &&
+    value['imageUrls'].every(
+      (imageUrl) => typeof imageUrl === 'string' && imageUrl.trim().length > 0,
+    ) &&
+    typeof value['category'] === 'string' &&
+    isNullableString(value['collection'] ?? null) &&
+    isNullableString(value['idealFor'] ?? null) &&
+    Array.isArray(value['variantPrices']) &&
+    value['variantPrices'].every(isProductVariant)
+  );
 }
 
 function isOrderTrackingItem(value: unknown): value is OrderTrackingItem {
@@ -292,6 +318,67 @@ export class Supabase {
     }
 
     return data;
+  }
+
+  async getAdminProducts(): Promise<Product[]> {
+    const { data, error } = await this.client.rpc('get_admin_products', {
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isProduct)) {
+      throw new Error('Product management lookup did not return valid product details.');
+    }
+
+    return data;
+  }
+
+  async uploadProductImages(files: File[]): Promise<string[]> {
+    if (files.length === 0 || files.length > 6) {
+      throw new Error('Choose between one and six product images to upload.');
+    }
+
+    const body = new FormData();
+    body.set('sessionToken', this.requireAdminSessionToken());
+    for (const file of files) {
+      body.append('images', file, file.name);
+    }
+
+    const { data, error } = await this.client.functions.invoke<{ imageUrls: unknown }>(
+      'manage-product-images',
+      { body },
+    );
+    if (error) {
+      throw error;
+    }
+    if (
+      !data ||
+      !Array.isArray(data.imageUrls) ||
+      data.imageUrls.length !== files.length ||
+      !data.imageUrls.every((imageUrl) => typeof imageUrl === 'string')
+    ) {
+      throw new Error('Image upload did not return valid public image URLs.');
+    }
+
+    return data.imageUrls;
+  }
+
+  async deleteProductImages(imageUrls: string[]): Promise<void> {
+    if (imageUrls.length === 0) {
+      return;
+    }
+    const body = {
+      action: 'delete',
+      sessionToken: this.requireAdminSessionToken(),
+      imageUrls,
+    };
+    const { error } = await this.client.functions.invoke('manage-product-images', { body });
+    if (error) {
+      throw error;
+    }
   }
 
   async updateAdminOrderStatus(
@@ -482,22 +569,7 @@ export class Supabase {
   }
 
   async createProduct(product: NewProduct): Promise<Product> {
-    const { id, ...productToInsert } = product;
-    const { data, error } = await this.client
-      .from(this.table)
-      .insert(productToInsert)
-      .select('*')
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
-      throw new Error('Product creation did not return a record.');
-    }
-
-    return data;
+    return this.saveAdminProduct(product);
   }
 
   async updateProduct(id: string, updates: ProductUpdate): Promise<Product> {
@@ -505,19 +577,23 @@ export class Supabase {
       throw new Error('At least one product field must be provided for an update.');
     }
 
-    const { data, error } = await this.client
-      .from(this.table)
-      .update(updates)
-      .eq('id', id)
-      .select('*')
-      .single();
+    return this.saveAdminProduct({ ...updates, id });
+  }
+
+  private async saveAdminProduct(
+    product: NewProduct | (ProductUpdate & { id: string }),
+  ): Promise<Product> {
+    const { data, error } = await this.client.rpc('save_admin_product', {
+      product_data: product,
+      session_token_input: this.requireAdminSessionToken(),
+    });
 
     if (error) {
       throw error;
     }
 
-    if (!data) {
-      throw new Error(`Product with id "${id}" was not found for update.`);
+    if (!isProduct(data)) {
+      throw new Error('Product save did not return a valid product record.');
     }
 
     return data;
