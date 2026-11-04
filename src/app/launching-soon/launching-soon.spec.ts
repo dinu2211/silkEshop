@@ -25,7 +25,7 @@ describe('LaunchingSoon', () => {
     const heading = fixture.nativeElement.querySelector('h1') as HTMLHeadingElement;
     expect(heading.textContent).toContain('A timeless tradition is coming');
     expect(fixture.nativeElement.textContent).toContain('Weave Made');
-    expect(fixture.nativeElement.textContent).toContain('Threads of Tradition');
+    expect(fixture.nativeElement.textContent).toContain('Wear the Weave');
   });
 
   it('should render the PNG brand icon', () => {
