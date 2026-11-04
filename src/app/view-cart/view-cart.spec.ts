@@ -1,14 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { CartService, Product, ProductCategory } from '../cart-service';
+import { Supabase } from '../services/supabase';
 import { ViewCart } from './view-cart';
 
 describe('ViewCart', () => {
   let component: ViewCart;
   let fixture: ComponentFixture<ViewCart>;
-  let httpTesting: HttpTestingController;
   const products: Product[] = [
     {
       id: 'silk-dhoti-01',
@@ -23,14 +21,18 @@ describe('ViewCart', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ViewCart],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        {
+          provide: Supabase,
+          useValue: { getProducts: jasmine.createSpy('getProducts').and.resolveTo(products) },
+        },
+      ],
     })
     .compileComponents();
 
-    httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(ViewCart);
     component = fixture.componentInstance;
-    httpTesting.expectOne('/api/products').flush(products);
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -67,9 +69,5 @@ describe('ViewCart', () => {
 
     expect(cartService.cartItems()).toHaveSize(0);
     expect(fixture.nativeElement.textContent).toContain('Your cart is empty');
-  });
-
-  afterEach(() => {
-    httpTesting.verify();
   });
 });

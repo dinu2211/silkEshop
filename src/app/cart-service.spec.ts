@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { CartService, DhotiSize, Product, ProductCategory } from './cart-service';
+import { ProductService } from './product-service';
+import { Supabase } from './services/supabase';
 
 describe('CartService', () => {
   let service: CartService;
-  let httpTesting: HttpTestingController;
   const products: Product[] = [
     {
       id: 'silk-dhoti-01',
@@ -18,20 +17,22 @@ describe('CartService', () => {
     },
   ];
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    const supabase = jasmine.createSpyObj<Supabase>('Supabase', ['getProducts']);
+    supabase.getProducts.and.resolveTo(products);
+
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [{ provide: Supabase, useValue: supabase }],
     });
-    httpTesting = TestBed.inject(HttpTestingController);
     service = TestBed.inject(CartService);
-    httpTesting.expectOne('/api/products').flush(products);
+    await TestBed.inject(ProductService).loadProducts();
   });
 
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  it('uses products returned by the products API', () => {
+  it('uses products returned by Supabase', () => {
     expect(service.products()).toEqual(products);
   });
 
@@ -85,7 +86,4 @@ describe('CartService', () => {
     expect(service.cartItems()[0].quantity).toBe(2);
   });
 
-  afterEach(() => {
-    httpTesting.verify();
-  });
 });

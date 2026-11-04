@@ -12,10 +12,8 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-The home page loads the catalog from the public Supabase `products` table. The Angular
-`ProductService` also requests the backend `GET /api/products` endpoint; the development server
-proxies `/api` to `http://localhost:8080`, so start the Spring Boot backend on that port while
-developing the frontend.
+The product catalog loads from the public Supabase `products` table. No separate Spring Boot
+backend or Tomcat server is required; run the Angular development server with `ng serve`.
 
 ## Product collections, variants, and inventory
 

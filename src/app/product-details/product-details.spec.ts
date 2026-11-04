@@ -1,6 +1,5 @@
+import { provideZonelessChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import {
   CartService,
@@ -10,34 +9,43 @@ import {
   ShirtSize,
   SleeveLength,
 } from '../cart-service';
+import { ProductService } from '../product-service';
+import { Supabase } from '../services/supabase';
 import { ProductDetails } from './product-details';
 
 describe('ProductDetails', () => {
   let component: ProductDetails;
   let fixture: ComponentFixture<ProductDetails>;
-  let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ProductDetails],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideZonelessChangeDetection(),
+        {
+          provide: Supabase,
+          useValue: {
+            getProducts: jasmine.createSpy('getProducts').and.resolveTo([
+              {
+                id: 'silk-dhoti-set-01',
+                name: 'Silk Dhoti Set',
+                description: 'Traditional silk dhoti set.',
+                imageUrls: ['assets/images/silk-dhoti-01.jpeg'],
+                category: ProductCategory.SilkDhotiSet,
+                variantPrices: [{ price: 3499, quantity: 10 }],
+              },
+            ]),
+          },
+        },
+      ],
     })
     .compileComponents();
 
-    httpTesting = TestBed.inject(HttpTestingController);
+    await TestBed.inject(ProductService).loadProducts();
     fixture = TestBed.createComponent(ProductDetails);
     component = fixture.componentInstance;
-    httpTesting.expectOne('/api/products').flush([
-      {
-        id: 'silk-dhoti-set-01',
-        name: 'Silk Dhoti Set',
-        description: 'Traditional silk dhoti set.',
-        imageUrls: ['assets/images/silk-dhoti-01.jpeg'],
-        category: ProductCategory.SilkDhotiSet,
-        variantPrices: [{ price: 3499, quantity: 10 }],
-      },
-    ]);
-    component.product = TestBed.inject(CartService).products()[0];
+    fixture.componentRef.setInput('product', TestBed.inject(CartService).products()[0]);
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -69,6 +77,36 @@ describe('ProductDetails', () => {
       .click();
 
     expect(component.selectedImageIndex).toBe(0);
+  });
+
+  it('opens the image in a full-screen viewer and supports bounded zoom controls', async () => {
+    const rootElement: HTMLElement = fixture.nativeElement;
+    rootElement.querySelector<HTMLButtonElement>('.image-open-button')!.click();
+    await fixture.whenStable();
+
+    expect(rootElement.querySelector('[aria-label="Full-screen image of Silk Dhoti Set"]'))
+      .toBeTruthy();
+
+    const zoomIn = rootElement.querySelector<HTMLButtonElement>('[aria-label="Zoom in"]')!;
+    zoomIn.click();
+    await fixture.whenStable();
+    expect(component.zoomPercent).toBe(125);
+
+    for (let index = 0; index < 20; index += 1) {
+      zoomIn.click();
+    }
+    await fixture.whenStable();
+    expect(component.zoomLevel).toBe(component.maximumZoom);
+    expect(zoomIn.disabled).toBeTrue();
+
+    rootElement.querySelector<HTMLButtonElement>('[aria-label="Zoom out"]')!.click();
+    await fixture.whenStable();
+    expect(component.zoomPercent).toBe(275);
+
+    component.onEscape();
+    await fixture.whenStable();
+    expect(component.isImageViewerOpen).toBeFalse();
+    expect(component.zoomLevel).toBe(component.minimumZoom);
   });
 
   it('shows product information and lets the user configure the quantity and clothing options', () => {
@@ -236,9 +274,5 @@ describe('ProductDetails', () => {
 
     expect(TestBed.inject(CartService).cartItems()[0].quantity).toBe(1);
     expect(component.remainingQuantity).toBe(0);
-  });
-
-  afterEach(() => {
-    httpTesting.verify();
   });
 });

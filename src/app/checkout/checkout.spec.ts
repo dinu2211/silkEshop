@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { CartService } from '../cart-service';
 import { Supabase } from '../services/supabase';
@@ -10,7 +8,6 @@ import { Checkout } from './checkout';
 describe('Checkout', () => {
   let component: Checkout;
   let fixture: ComponentFixture<Checkout>;
-  let httpTesting: HttpTestingController;
   let createOrder: jasmine.Spy;
   let createPaymentOrder: jasmine.Spy;
 
@@ -26,12 +23,11 @@ describe('Checkout', () => {
     await TestBed.configureTestingModule({
       imports: [Checkout],
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
         provideRouter([]),
         {
           provide: Supabase,
           useValue: {
+            getProducts: jasmine.createSpy('getProducts').and.resolveTo([]),
             createOrder,
             createPaymentOrder,
             verifyPayment: jasmine.createSpy('verifyPayment'),
@@ -41,11 +37,10 @@ describe('Checkout', () => {
     })
       .compileComponents();
 
-    httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Checkout);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    httpTesting.expectOne('/api/products').flush([]);
+    await fixture.whenStable();
   });
 
   it('should create', () => {
@@ -87,7 +82,4 @@ describe('Checkout', () => {
     expect(component.isSubmitting).toBeFalse();
   });
 
-  afterEach(() => {
-    httpTesting.verify();
-  });
 });

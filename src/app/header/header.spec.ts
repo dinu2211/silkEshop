@@ -1,26 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { Header } from './header';
+import { Supabase } from '../services/supabase';
 
 describe('Header', () => {
   let component: Header;
   let fixture: ComponentFixture<Header>;
-  let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Header],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        {
+          provide: Supabase,
+          useValue: { getProducts: jasmine.createSpy('getProducts').and.resolveTo([]) },
+        },
+      ],
     })
     .compileComponents();
 
-    httpTesting = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Header);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    httpTesting.expectOne('/api/products').flush([]);
+    await fixture.whenStable();
   });
 
   it('should create', () => {
@@ -31,9 +33,5 @@ describe('Header', () => {
     const icon = fixture.nativeElement.querySelector('.logo-mark') as HTMLImageElement;
 
     expect(icon.getAttribute('src')).toBe('/favicon.png');
-  });
-
-  afterEach(() => {
-    httpTesting.verify();
   });
 });

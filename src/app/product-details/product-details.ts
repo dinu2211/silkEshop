@@ -47,13 +47,25 @@ export class ProductDetails implements OnChanges {
   sleeveLength = SleeveLength.FullSleeve;
   quantity = 1;
   selectedImageIndex = 0;
+  isImageViewerOpen = false;
+  zoomLevel = 1;
+
+  readonly minimumZoom = 1;
+  readonly maximumZoom = 3;
+  readonly zoomStep = 0.25;
 
   get selectedImage(): string | null {
     return this.product.imageUrls[this.selectedImageIndex] ?? null;
   }
 
+  get zoomPercent(): number {
+    return Math.round(this.zoomLevel * 100);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['product']) {
+      this.isImageViewerOpen = false;
+      this.zoomLevel = this.minimumZoom;
       const availableVariant = this.product.variantPrices.find((variant) => variant.quantity > 0);
       if (availableVariant) {
         this.dhotiSize = availableVariant.dhotiSize ?? this.dhotiSize;
@@ -69,7 +81,32 @@ export class ProductDetails implements OnChanges {
   selectImage(index: number): void {
     if (index >= 0 && index < this.product.imageUrls.length) {
       this.selectedImageIndex = index;
+      this.zoomLevel = this.minimumZoom;
     }
+  }
+
+  openImageViewer(): void {
+    if (this.selectedImage) {
+      this.zoomLevel = this.minimumZoom;
+      this.isImageViewerOpen = true;
+    }
+  }
+
+  closeImageViewer(): void {
+    this.isImageViewerOpen = false;
+    this.zoomLevel = this.minimumZoom;
+  }
+
+  zoomIn(): void {
+    this.zoomLevel = Math.min(this.maximumZoom, this.zoomLevel + this.zoomStep);
+  }
+
+  zoomOut(): void {
+    this.zoomLevel = Math.max(this.minimumZoom, this.zoomLevel - this.zoomStep);
+  }
+
+  resetZoom(): void {
+    this.zoomLevel = this.minimumZoom;
   }
 
   previousImage(): void {
@@ -220,6 +257,10 @@ export class ProductDetails implements OnChanges {
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.close.emit();
+    if (this.isImageViewerOpen) {
+      this.closeImageViewer();
+    } else {
+      this.close.emit();
+    }
   }
 }

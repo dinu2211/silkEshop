@@ -25,7 +25,14 @@
     <div class="product-image-panel">
       @if (selectedImage; as imageUrl) {
         <div class="image-viewer">
-          <img class="product-image" [src]="imageUrl" [alt]="product.name" />
+          <button
+            class="image-open-button"
+            type="button"
+            [attr.aria-label]="'Open full-screen image viewer for ' + product.name"
+            (click)="openImageViewer()"
+          >
+            <img class="product-image" [src]="imageUrl" [alt]="product.name" />
+          </button>
           @if (product.imageUrls.length > 1) {
             <button
               class="image-nav previous"
@@ -213,4 +220,93 @@
       </div>
     </div>
   </section>
+
+  @if (isImageViewerOpen && selectedImage; as imageUrl) {
+    <div class="fullscreen-image-viewer">
+      <button
+        class="fullscreen-backdrop"
+        type="button"
+        aria-label="Close full-screen image viewer"
+        (click)="closeImageViewer()"
+      ></button>
+      <section
+        class="fullscreen-image-dialog"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Full-screen image of ' + product.name"
+      >
+        <div class="fullscreen-toolbar">
+          @if (product.imageUrls.length > 1) {
+            <span class="fullscreen-image-counter">
+              {{ selectedImageIndex + 1 }} / {{ product.imageUrls.length }}
+            </span>
+          }
+          <div class="zoom-controls" aria-label="Image zoom controls">
+            <button
+              type="button"
+              aria-label="Zoom out"
+              [disabled]="zoomLevel <= minimumZoom"
+              (click)="zoomOut()"
+            >
+              <mat-icon>zoom_out</mat-icon>
+            </button>
+            <span class="zoom-level" aria-live="polite">{{ zoomPercent }}%</span>
+            <button
+              type="button"
+              aria-label="Zoom in"
+              [disabled]="zoomLevel >= maximumZoom"
+              (click)="zoomIn()"
+            >
+              <mat-icon>zoom_in</mat-icon>
+            </button>
+            <button
+              type="button"
+              aria-label="Reset zoom"
+              [disabled]="zoomLevel === minimumZoom"
+              (click)="resetZoom()"
+            >
+              <mat-icon>fit_screen</mat-icon>
+            </button>
+          </div>
+          <button
+            class="fullscreen-close"
+            type="button"
+            aria-label="Close full-screen image viewer"
+            (click)="closeImageViewer()"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="fullscreen-image-stage">
+          @if (product.imageUrls.length > 1) {
+            <button
+              class="fullscreen-nav previous"
+              type="button"
+              aria-label="Previous product image"
+              (click)="previousImage()"
+            >
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+          }
+          <img
+            class="fullscreen-image"
+            [src]="imageUrl"
+            [alt]="product.name"
+            [style.transform]="'scale(' + zoomLevel + ')'"
+          />
+          @if (product.imageUrls.length > 1) {
+            <button
+              class="fullscreen-nav next"
+              type="button"
+              aria-label="Next product image"
+              (click)="nextImage()"
+            >
+              <mat-icon>chevron_right</mat-icon>
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+  }
 </div>
