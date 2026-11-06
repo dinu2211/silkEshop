@@ -131,6 +131,7 @@
                     {{ order.address }}
                     @if (order.apartment) {, {{ order.apartment }}}
                     <br />{{ order.city }}, {{ order.state }} {{ order.postalCode }}
+                    <br />{{ order.country }}
                   </p>
                   @if (order.deliveryNote) {
                     <p class="delivery-note"><strong>Delivery note:</strong> {{ order.deliveryNote }}</p>
@@ -162,6 +163,12 @@
                     {{ order.paymentStatus | titlecase }}
                   </span></p>
                   <p>Subtotal <span>{{ order.subtotal | currency: 'INR' }}</span></p>
+                  @if (order.discountAmount > 0) {
+                    <p class="discount-row">
+                      Discount{{ order.promoCode ? ' · ' + order.promoCode : '' }}
+                      <span>−{{ order.discountAmount | currency: 'INR' }}</span>
+                    </p>
+                  }
                   <p>Shipping <span>{{ order.shippingFee | currency: 'INR' }}</span></p>
                   <p class="total-line">Total <strong>{{ order.total | currency: 'INR' }}</strong></p>
                 </aside>
@@ -185,6 +192,7 @@
                       {{ order.address }}
                       @if (order.apartment) {, {{ order.apartment }}}
                       <br />{{ order.city }}, {{ order.state }} {{ order.postalCode }}
+                      <br />{{ order.country }}
                     </p>
                   </div>
                   @if (order.deliveryNote) {

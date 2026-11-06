@@ -124,6 +124,32 @@
             </label>
 
             <label class="field">
+              <span>PIN code <span class="required-mark">*</span></span>
+              <input
+                type="text"
+                name="postalCode"
+                [(ngModel)]="shippingDetails.postalCode"
+                (ngModelChange)="onPostalCodeChange($event)"
+                autocomplete="postal-code"
+                inputmode="numeric"
+                placeholder="6-digit PIN code"
+                pattern="[0-9]{6}"
+                maxlength="6"
+                aria-describedby="postal-code-hint"
+                required
+              />
+              <small id="postal-code-hint" aria-live="polite">
+                @if (isLookingUpPostalCode) {
+                  Looking up city, state, and country...
+                } @else if (postalLookupError) {
+                  {{ postalLookupError }}
+                } @else {
+                  Enter your PIN code to fill in your city, state, and country.
+                }
+              </small>
+            </label>
+
+            <label class="field">
               <span>Town / city <span class="required-mark">*</span></span>
               <input
                 type="text"
@@ -131,6 +157,7 @@
                 [(ngModel)]="shippingDetails.city"
                 autocomplete="address-level2"
                 placeholder="Your city"
+                [disabled]="isPostalAddressPrefilled"
                 required
               />
             </label>
@@ -143,21 +170,20 @@
                 [(ngModel)]="shippingDetails.state"
                 autocomplete="address-level1"
                 placeholder="Your state"
+                [disabled]="isPostalAddressPrefilled"
                 required
               />
             </label>
 
             <label class="field">
-              <span>PIN code <span class="required-mark">*</span></span>
+              <span>Country <span class="required-mark">*</span></span>
               <input
                 type="text"
-                name="postalCode"
-                [(ngModel)]="shippingDetails.postalCode"
-                autocomplete="postal-code"
-                inputmode="numeric"
-                placeholder="6-digit PIN code"
-                pattern="[0-9]{6}"
-                maxlength="6"
+                name="country"
+                [(ngModel)]="shippingDetails.country"
+                autocomplete="country-name"
+                placeholder="Your country"
+                [disabled]="isPostalAddressPrefilled"
                 required
               />
             </label>
@@ -213,11 +239,49 @@
             }
           </ul>
 
+          <section class="promo-entry" aria-labelledby="promo-title">
+            <label id="promo-title" for="promo-code">Promo code</label>
+            @if (appliedPromo) {
+              <div class="promo-applied" role="status">
+                <span>
+                  <strong>{{ appliedPromo.code }}</strong>
+                  <small>Promo applied successfully</small>
+                </span>
+                <button type="button" (click)="removePromo()">Remove</button>
+              </div>
+            } @else {
+              <div class="promo-input">
+                <input
+                  id="promo-code"
+                  type="text"
+                  name="promoCode"
+                  [(ngModel)]="promoCode"
+                  placeholder="Enter your code"
+                  autocomplete="off"
+                  maxlength="40"
+                  [disabled]="isApplyingPromo"
+                />
+                <button type="button" (click)="applyPromo()" [disabled]="isApplyingPromo">
+                  {{ isApplyingPromo ? 'Checking…' : 'Apply' }}
+                </button>
+              </div>
+            }
+            @if (promoError) {
+              <p class="promo-error" role="alert">{{ promoError }}</p>
+            }
+          </section>
+
           <div class="price-breakdown">
             <div>
               <span>Subtotal</span>
               <span>{{ cartService.totalPrice() | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
             </div>
+            @if (appliedPromo) {
+              <div class="discount-line">
+                <span>Discount ({{ appliedPromo.code }})</span>
+                <span>−{{ discountAmount | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+              </div>
+            }
             <div>
               <span>Shipping</span>
               <span>{{ shippingFee | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
@@ -226,7 +290,7 @@
 
           <div class="order-total">
             <span>Total due</span>
-            <strong>{{ cartService.totalPrice() + shippingFee | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            <strong>{{ totalDue | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
           </div>
           <p class="shipping-note">Includes a fixed ₹100 delivery fee. Payment is securely processed by Razorpay.</p>
 

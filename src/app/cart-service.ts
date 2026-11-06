@@ -104,6 +104,8 @@ export interface Product extends Omit<CartItem, 'quantity' | 'category' | 'price
   category: ProductCategory;
   variantPrices: ProductVariantPrice[];
   imageUrls: string[];
+  isApproved?: boolean;
+  isPendingUpdate?: boolean;
 }
 
 

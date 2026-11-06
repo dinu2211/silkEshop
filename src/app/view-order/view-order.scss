@@ -365,6 +365,11 @@ button:focus-visible,
   white-space: nowrap;
 }
 
+.order-total .discount-row,
+.order-total .discount-row > span {
+  color: #34704b;
+}
+
 .payment-badge {
   padding: 4px 8px;
   background: #f5f0e6;

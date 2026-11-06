@@ -30,8 +30,9 @@ describe('Footer', () => {
   });
 
   it('should render the footer navigation', () => {
-    const footer = fixture.nativeElement.querySelector('footer');
-    const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>('.footer-navigation a');
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    const footer = nativeElement.querySelector('footer');
+    const links = nativeElement.querySelectorAll<HTMLAnchorElement>('.footer-navigation a');
 
     expect(footer).toBeTruthy();
     expect(links.length).toBe(2);
@@ -40,7 +41,8 @@ describe('Footer', () => {
   });
 
   it('should render mobile navigation links for home, about, and contact', () => {
-    const links = fixture.nativeElement.querySelectorAll<HTMLAnchorElement>(
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    const links = nativeElement.querySelectorAll<HTMLAnchorElement>(
       '.footer-mobile-navigation a',
     );
 

@@ -25,6 +25,8 @@ describe('Conformation', () => {
               paymentStatus: 'paid',
               subtotal: 1200,
               shippingFee: 100,
+              discountAmount: 0,
+              promoCode: null,
               total: 1300,
               paymentId: 'payment-id',
             }),

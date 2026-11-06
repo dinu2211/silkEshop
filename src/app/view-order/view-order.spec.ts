@@ -14,6 +14,8 @@ describe('ViewOrder', () => {
     createdAt: '2026-10-27T10:00:00.000Z',
     subtotal: 1200,
     shippingFee: 100,
+    discountAmount: 0,
+    promoCode: null,
     total: 1300,
     items: [],
     fullName: 'A Customer',
@@ -23,6 +25,7 @@ describe('ViewOrder', () => {
     apartment: null,
     city: 'Chennai',
     state: 'Tamil Nadu',
+    country: 'India',
     postalCode: '600001',
     deliveryNote: null,
   };

@@ -20,6 +20,9 @@ export const routes: Routes = [{
   path: 'manage-products',
   loadComponent: () => import('./manage-products/manage-products').then(m => m.ManageProducts)
 }, {
+  path: 'manage-promo',
+  loadComponent: () => import('./manage-promo/manage-promo').then(m => m.ManagePromo)
+}, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
 }, {

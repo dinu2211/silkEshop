@@ -89,21 +89,38 @@ reads the status from the `orders` table through the status function.
 ## Order management
 
 Apply the order-management and custom-admin-login migrations after the existing order and tracking
-migrations. Create an administrator from the Supabase SQL Editor, replacing both placeholders with
-new values:
+migrations. Apply `supabase/migrations/20261106000000_add_promotions_and_admin_screen_access.sql`
+after the country-on-orders migration, then apply
+`supabase/migrations/20261107000000_add_product_approval_workflow.sql` followed by
+`supabase/migrations/20261108000000_stage_product_changes_for_approval.sql`. Product submissions
+and edits are stored in `product_approval_queue`; the live `products` table changes only after an
+administrator with `manage-promo` access approves the submission in the first tab of `/manage-promo`.
+For an existing product, customers continue to see the last approved version until approval. The
+second tab manages promo codes. Existing products are marked approved by the first approval
+migration. Create an administrator from the Supabase SQL Editor,
+replacing the placeholders with new values:
 
 ```sql
-insert into public.admin_users (user_id, password_hash)
+insert into public.admin_users (user_id, password_hash, screen_access)
 values (
   'YOUR_ADMIN_ID',
-  extensions.crypt('CHOOSE_A_NEW_PASSWORD_AT_LEAST_12_CHARACTERS', extensions.gen_salt('bf', 12))
+  extensions.crypt('CHOOSE_A_NEW_PASSWORD_AT_LEAST_12_CHARACTERS', extensions.gen_salt('bf', 12)),
+  array['manage-products', 'manage-orders', 'manage-promo']
 );
 ```
 
-Only the bcrypt password hash is stored. The `/view-order` page signs in with that admin ID and
-password; database functions validate short-lived sessions for every order read and status update.
+Only the bcrypt password hash is stored. The `screen_access` column controls the `/manage-products`,
+`/view-order`, and `/manage-promo` screens. Grant existing administrators promo access in the SQL
+Editor with
+`update public.admin_users set screen_access = array_append(screen_access, 'manage-promo') where user_id = 'YOUR_ADMIN_ID';`.
+The promo page checks this permission in the database, and promo reads and writes enforce it
+server-side. Admin sessions are short-lived and use the same credentials across management screens.
 Use a new password with 12–72 bytes; five incorrect attempts lock that admin account for 15 minutes.
 Do not put an unhashed password or Supabase service-role key in the application.
+
+Promo codes can be percentage-based (up to 100%) or fixed INR amounts. Inactive promos cannot be
+applied. Checkout validates codes through Supabase and the order-creation function independently
+revalidates and stores the final discount, which is deducted from the Razorpay payment amount.
 
 ## WhatsApp order confirmations
 

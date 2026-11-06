@@ -311,9 +311,6 @@ export class ManageProducts {
       return;
     }
 
-    const originalImageUrls =
-      this.products().find((item) => item.id === this.editingProductId())?.imageUrls ?? [];
-    const retainedImages = this.draft.images.filter((image) => !image.file);
     const pendingFiles = this.draft.images.flatMap((image) => (image.file ? [image.file] : []));
     let uploadedImageUrls: string[] = [];
     const product: NewProduct = {
@@ -360,34 +357,15 @@ export class ManageProducts {
         );
       }
       const editingId = this.editingProductId();
-      const savedProduct = editingId
-        ? await this.supabase.updateProduct(editingId, product)
-        : await this.supabase.createProduct(product);
-      this.products.update((products) => {
-        const existingIndex = products.findIndex((current) => current.id === savedProduct.id);
-        if (existingIndex < 0) {
-          return [savedProduct, ...products];
-        }
-        return products.map((current) => (current.id === savedProduct.id ? savedProduct : current));
-      });
-      const removedImageUrls = originalImageUrls.filter(
-        (url) => !savedProduct.imageUrls.includes(url),
-      );
-      let cleanupFailed = false;
-      if (removedImageUrls.length > 0) {
-        try {
-          await this.supabase.deleteProductImages(removedImageUrls);
-        } catch (error: unknown) {
-          cleanupFailed = true;
-          console.error('Saved product images, but old image cleanup failed.', error);
-        }
+      if (editingId) {
+        await this.supabase.updateProduct(editingId, product);
+      } else {
+        await this.supabase.createProduct(product);
       }
       this.successMessage.set(
-        cleanupFailed
-          ? 'Product saved, but removed images could not be cleaned up.'
-          : editingId
-            ? 'Product updated.'
-            : 'Product added.',
+        editingId
+          ? 'Product changes submitted and are waiting for admin approval.'
+          : 'Product submitted and is waiting for admin approval.',
       );
       this.closeEditor();
     } catch (error: unknown) {

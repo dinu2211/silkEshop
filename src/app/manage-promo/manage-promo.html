@@ -1,0 +1,292 @@
+<main class="promo-page">
+  <div class="promo-shell">
+    <a class="back-link" routerLink="/">
+      <span aria-hidden="true">←</span>
+      Back to shop
+    </a>
+
+    @if (isCheckingSession()) {
+      <p class="page-message" role="status">Checking administrator access…</p>
+    } @else if (!isAdmin()) {
+      <section class="sign-in-card" aria-labelledby="sign-in-title">
+        <p class="eyebrow">WEAVE MADE · STAFF</p>
+        <h1 id="sign-in-title">Promo management</h1>
+        <p class="intro">Sign in with an administrator account that has promo-screen access.</p>
+        <form class="sign-in-form" (ngSubmit)="signIn()">
+          <label class="field">
+            <span>Admin user ID</span>
+            <input
+              type="text"
+              name="userId"
+              [(ngModel)]="userId"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          @if (errorMessage()) {
+            <p class="error-message" role="alert">{{ errorMessage() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="isSigningIn()">
+            {{ isSigningIn() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      </section>
+    } @else if (!hasPromoAccess()) {
+      <section class="access-card" aria-labelledby="access-title">
+        <p class="eyebrow">WEAVE MADE · STAFF</p>
+        <h1 id="access-title">Promo access required</h1>
+        <p>
+          This administrator account does not have permission to manage promotions. Ask an
+          administrator to grant the <code>manage-promo</code> screen access.
+        </p>
+        @if (errorMessage()) {
+          <p class="error-message" role="alert">{{ errorMessage() }}</p>
+        }
+        <button class="secondary-button" type="button" (click)="signOut()">Sign out</button>
+      </section>
+    } @else {
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">WEAVE MADE · STAFF</p>
+          <h1>Products &amp; promos</h1>
+          <p>Approve new products and manage the discount codes customers use at checkout.</p>
+        </div>
+        <div class="heading-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isLoading() || isLoadingPending()"
+            (click)="refreshActiveTab()"
+          >
+            Refresh
+          </button>
+          <button class="text-button" type="button" (click)="signOut()">Sign out</button>
+        </div>
+      </header>
+
+      @if (errorMessage()) {
+        <p class="page-alert error-message" role="alert">{{ errorMessage() }}</p>
+      }
+      @if (successMessage()) {
+        <p class="page-alert success-message" role="status">{{ successMessage() }}</p>
+      }
+
+      <nav class="tabs" aria-label="Product and promo management">
+        <button
+          class="tab-button"
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'approval'"
+          [class.selected]="activeTab() === 'approval'"
+          (click)="activeTab.set('approval')"
+        >
+          Products to approve
+          <span class="tab-count">{{ pendingProducts().length }}</span>
+        </button>
+        <button
+          class="tab-button"
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeTab() === 'promos'"
+          [class.selected]="activeTab() === 'promos'"
+          (click)="activeTab.set('promos')"
+        >
+          Manage promo
+        </button>
+      </nav>
+
+      @if (activeTab() === 'approval') {
+        <section class="promo-catalog" aria-labelledby="approval-list-title">
+          <header class="catalog-heading">
+            <div>
+              <p class="eyebrow">PRODUCT REVIEW</p>
+              <h2 id="approval-list-title">Products waiting for approval</h2>
+            </div>
+          </header>
+
+          @if (isLoadingPending()) {
+            <p class="page-message" role="status">Loading products awaiting approval…</p>
+          } @else if (pendingProducts().length === 0) {
+            <div class="empty-state">
+              <span class="empty-icon" aria-hidden="true">✓</span>
+              <h3>All caught up</h3>
+              <p>New products will appear here when they are submitted.</p>
+            </div>
+          } @else {
+            <div class="pending-product-list">
+              @for (product of pendingProducts(); track product.id) {
+                <article class="pending-product-card">
+                  <img [src]="product.imageUrls[0]" [alt]="product.name" />
+                  <div class="pending-product-info">
+                    <span class="status-pill">
+                      {{ product.isPendingUpdate ? 'Changes awaiting approval' : 'New product' }}
+                    </span>
+                    <h3>{{ product.name }}</h3>
+                    <p class="pending-category">{{ product.category }}</p>
+                    <p class="pending-description">{{ product.description }}</p>
+                    <div class="variant-summary">
+                      @for (variant of product.variantPrices; track $index) {
+                        <span>
+                          {{ variant.price | currency: 'INR' }} · {{ variant.quantity }} in stock
+                          @if (variant.dhotiSize) { · {{ variant.dhotiSize }} }
+                          @if (variant.shirtSize) { · {{ variant.shirtSize }} }
+                          @if (variant.sleeveLength) { · {{ variant.sleeveLength }} }
+                          @if (variant.dhotiType) { · {{ variant.dhotiType }} }
+                        </span>
+                      }
+                    </div>
+                  </div>
+                  <button
+                    class="primary-button approve-button"
+                    type="button"
+                    [disabled]="approvingProductId() !== null"
+                    (click)="approveProduct(product)"
+                  >
+                    {{ approvingProductId() === product.id ? 'Approving…' : 'Approve product' }}
+                  </button>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      } @else {
+      @if (isEditorOpen()) {
+        <section class="editor-card" aria-labelledby="editor-title">
+          <header class="editor-heading">
+            <div>
+              <p class="eyebrow">{{ editingPromoId() ? 'EDIT OFFER' : 'NEW OFFER' }}</p>
+              <h2 id="editor-title">{{ editingPromoId() ? 'Update promo' : 'Create a promo' }}</h2>
+            </div>
+            <button class="text-button" type="button" (click)="closeEditor()">Close</button>
+          </header>
+
+          <form class="promo-form" (ngSubmit)="savePromo()">
+            <label class="field">
+              <span>Promo code</span>
+              <input
+                type="text"
+                name="code"
+                [(ngModel)]="draft.code"
+                autocomplete="off"
+                maxlength="40"
+                placeholder="e.g. WEAVE10"
+                required
+              />
+              <small>2–40 letters, numbers, underscores, or hyphens.</small>
+            </label>
+
+            <label class="field">
+              <span>Discount type</span>
+              <select name="discountType" [(ngModel)]="draft.discountType" required>
+                <option value="percentage">Percentage</option>
+                <option value="fixed">Fixed amount (INR)</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>{{ draft.discountType === 'percentage' ? 'Discount percentage' : 'Discount amount (INR)' }}</span>
+              <input
+                type="number"
+                name="discountValue"
+                [(ngModel)]="draft.discountValue"
+                min="0.01"
+                [max]="draft.discountType === 'percentage' ? 100 : null"
+                step="0.01"
+                required
+              />
+              @if (draft.discountType === 'percentage') {
+                <small>Enter a value up to 100. The discount applies to the item subtotal.</small>
+              } @else {
+                <small>Fixed discount is capped at the item subtotal.</small>
+              }
+            </label>
+
+            <label class="active-toggle">
+              <input type="checkbox" name="isActive" [(ngModel)]="draft.isActive" />
+              <span>
+                <strong>Promo is active</strong>
+                <small>Customers can apply active promo codes at checkout.</small>
+              </span>
+            </label>
+
+            <footer class="form-actions">
+              <button class="secondary-button" type="button" (click)="closeEditor()">Cancel</button>
+              <button class="primary-button" type="submit" [disabled]="isSaving()">
+                {{ isSaving() ? 'Saving…' : editingPromoId() ? 'Save changes' : 'Create promo' }}
+              </button>
+            </footer>
+          </form>
+        </section>
+      }
+
+      <section class="promo-catalog" aria-labelledby="promo-list-title">
+        <header class="catalog-heading">
+          <div>
+            <p class="eyebrow">YOUR OFFERS</p>
+            <h2 id="promo-list-title">Promo codes</h2>
+          </div>
+          <button class="primary-button" type="button" (click)="startNewPromo()">
+            <span aria-hidden="true">+</span> Add promo
+          </button>
+        </header>
+
+        @if (isLoading()) {
+          <p class="page-message" role="status">Loading promo codes…</p>
+        } @else if (promos().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">%</span>
+            <h3>No promo codes yet</h3>
+            <p>Create your first offer and customers can use it at checkout.</p>
+            <button class="secondary-button" type="button" (click)="startNewPromo()">Create a promo</button>
+          </div>
+        } @else {
+          <div class="promo-list">
+            @for (promo of promos(); track promo.id) {
+              <article class="promo-card" [class.inactive]="!promo.isActive">
+                <div class="promo-mark" aria-hidden="true">%</div>
+                <div class="promo-info">
+                  <div class="promo-title">
+                    <h3>{{ promo.code }}</h3>
+                    <span class="status-pill" [class.active]="promo.isActive">
+                      {{ promo.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+                  <p class="discount-description">
+                    @if (promo.discountType === 'percentage') {
+                      {{ promo.discountValue }}% off
+                    } @else {
+                      {{ promo.discountValue | currency: 'INR' }} off
+                    }
+                  </p>
+                  <small>Created {{ promo.createdAt | date: 'd MMM y' }}</small>
+                </div>
+                <div class="promo-actions">
+                  <button class="text-button" type="button" (click)="editPromo(promo)">Edit</button>
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    [disabled]="updatingPromoId() === promo.id"
+                    (click)="togglePromo(promo)"
+                  >
+                    {{ updatingPromoId() === promo.id ? 'Updating…' : promo.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </section>
+      }
+    }
+  </div>
+</main>

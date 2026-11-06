@@ -203,6 +203,14 @@
                           {{ currentOrder.subtotal | currency: 'INR' : 'symbol' : '1.0-0' }}
                         </dd>
                       </div>
+                      @if (currentOrder.discountAmount > 0) {
+                        <div class="discount-row">
+                          <dt>Discount{{ currentOrder.promoCode ? ' · ' + currentOrder.promoCode : '' }}</dt>
+                          <dd>
+                            −{{ currentOrder.discountAmount | currency: 'INR' : 'symbol' : '1.0-0' }}
+                          </dd>
+                        </div>
+                      }
                       <div>
                         <dt>Shipping</dt>
                         <dd>

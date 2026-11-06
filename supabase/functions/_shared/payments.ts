@@ -11,6 +11,8 @@ interface OrderRow {
   id: string;
   subtotal: string | number;
   shipping_fee: string | number;
+  discount_amount: string | number;
+  promo_code: string | null;
   status: string;
   payment_status: string;
   razorpay_order_id: string | null;
@@ -47,21 +49,24 @@ function orderIdFrom(body: PaymentRequest): string {
   return orderId;
 }
 
-function minorUnits(value: string | number): number {
+function minorUnits(value: string | number, allowZero = false): number {
   const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(String(value));
   if (!match) {
     throw new ApiError(422, 'The order total is invalid.');
   }
   const amount = BigInt(match[1]) * 100n + BigInt((match[2] ?? '').padEnd(2, '0'));
-  if (amount <= 0n || amount > BigInt(Number.MAX_SAFE_INTEGER)) {
+  if (amount < 0n || (!allowZero && amount === 0n) || amount > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new ApiError(422, 'The order total is outside the supported payment range.');
   }
   return Number(amount);
 }
 
 function orderTotal(order: OrderRow): number {
-  const total = BigInt(minorUnits(order.subtotal)) + BigInt(minorUnits(order.shipping_fee));
-  if (total > BigInt(Number.MAX_SAFE_INTEGER)) {
+  const total =
+    BigInt(minorUnits(order.subtotal, true)) +
+    BigInt(minorUnits(order.shipping_fee, true)) -
+    BigInt(minorUnits(order.discount_amount, true));
+  if (total <= 0n || total > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new ApiError(422, 'The order total is outside the supported payment range.');
   }
   return Number(total);
@@ -83,7 +88,7 @@ function orderUrl(orderId: string): URL {
   url.searchParams.set('id', `eq.${orderId}`);
   url.searchParams.set(
     'select',
-    'id,subtotal,shipping_fee,status,payment_status,razorpay_order_id,razorpay_payment_id',
+    'id,subtotal,shipping_fee,discount_amount,promo_code,status,payment_status,razorpay_order_id,razorpay_payment_id',
   );
   return url;
 }
@@ -161,13 +166,16 @@ async function confirmPaidOrder(
 function orderStatus(order: OrderRow) {
   const subtotal = Number(order.subtotal);
   const shippingFee = Number(order.shipping_fee);
+  const discountAmount = Number(order.discount_amount);
   return {
     id: order.id,
     status: order.status,
     paymentStatus: order.payment_status,
     subtotal,
     shippingFee,
-    total: subtotal + shippingFee,
+    discountAmount,
+    promoCode: order.promo_code,
+    total: subtotal + shippingFee - discountAmount,
     paymentId: order.razorpay_payment_id,
   };
 }

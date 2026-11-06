@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import {
   DhotiSize,
   DhotiType,
@@ -46,22 +48,29 @@ describe('ManageProducts', () => {
     supabase.createProduct.and.callFake(async (newProduct) => ({
       ...newProduct,
       id: 'new-product',
+      isApproved: false,
     }));
     supabase.updateProduct.and.callFake(async (id, updates) => ({
       ...product,
       ...updates,
       id,
+      isApproved: false,
     }));
 
     await TestBed.configureTestingModule({
       imports: [ManageProducts],
-      providers: [{ provide: Supabase, useValue: supabase }],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: Supabase, useValue: supabase },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ManageProducts);
     component = fixture.componentInstance;
     fixture.detectChanges();
     await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve));
     fixture.detectChanges();
   });
 
@@ -110,8 +119,8 @@ describe('ManageProducts', () => {
         variantPrices: [jasmine.objectContaining({ price: 2500, quantity: 3 })],
       }),
     );
-    expect(component.products()[0].id).toBe('new-product');
-    expect(component.successMessage()).toBe('Product added.');
+    expect(component.products()).toEqual([product]);
+    expect(component.successMessage()).toBe('Product submitted and is waiting for admin approval.');
   });
 
   it('updates an existing product with the same admin session', async () => {
@@ -124,6 +133,9 @@ describe('ManageProducts', () => {
       product.id,
       jasmine.objectContaining({ name: 'Updated Silk Dhoti' }),
     );
-    expect(component.products()[0].name).toBe('Updated Silk Dhoti');
+    expect(component.products()[0].name).toBe(product.name);
+    expect(component.successMessage()).toBe(
+      'Product changes submitted and are waiting for admin approval.',
+    );
   });
 });

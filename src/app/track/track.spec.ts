@@ -15,6 +15,8 @@ describe('Track', () => {
     createdAt: '2026-10-26T10:00:00Z',
     subtotal: 1200,
     shippingFee: 100,
+    discountAmount: 0,
+    promoCode: null,
     total: 1300,
     items: [
       {

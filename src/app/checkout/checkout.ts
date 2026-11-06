@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
@@ -7,8 +7,15 @@ import { CartService } from '../cart-service';
 import {
   Supabase,
   type OrderCustomer,
+  type PromoValidation,
   type RazorpayPaymentResponse,
 } from '../services/supabase';
+
+interface PostalAddress {
+  city: string;
+  state: string;
+  country: string;
+}
 
 interface CheckoutForm {
   invalid: boolean | null;
@@ -27,6 +34,7 @@ export class Checkout {
   readonly cartService = inject(CartService);
   private readonly supabase = inject(Supabase);
   private readonly router = inject(Router);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
   readonly shippingFee = 100;
   readonly shippingDetails: OrderCustomer = {
     fullName: '',
@@ -37,15 +45,121 @@ export class Checkout {
     apartment: '',
     city: '',
     state: '',
+    country: '',
     postalCode: '',
     note: '',
   };
 
+  isPostalAddressPrefilled = false;
+  isLookingUpPostalCode = false;
+  postalLookupError = '';
   isSubmitting = false;
   submissionError = '';
+  promoCode = '';
+  appliedPromo: PromoValidation | null = null;
+  promoError = '';
+  isApplyingPromo = false;
+  private postalLookupRequest = 0;
   private orderId: string | null = null;
   unverifiedPayment: RazorpayPaymentResponse | null = null;
   private razorpayScript: Promise<void> | null = null;
+
+  get discountAmount(): number {
+    if (!this.appliedPromo) {
+      return 0;
+    }
+
+    const subtotal = this.cartService.totalPrice();
+    const discount =
+      this.appliedPromo.discountType === 'percentage'
+        ? Math.round((subtotal * this.appliedPromo.discountValue) / 100 * 100) / 100
+        : this.appliedPromo.discountValue;
+    return Math.min(subtotal, discount);
+  }
+
+  get totalDue(): number {
+    return Math.max(0, this.cartService.totalPrice() - this.discountAmount) + this.shippingFee;
+  }
+
+  async applyPromo(): Promise<void> {
+    const code = this.promoCode.trim();
+    this.promoError = '';
+    this.appliedPromo = null;
+    if (!code) {
+      this.promoError = 'Enter a promo code to apply your discount.';
+      return;
+    }
+
+    this.isApplyingPromo = true;
+    try {
+      const promo = await this.supabase.validatePromoCode(
+        code,
+        this.cartService.totalPrice(),
+      );
+      this.appliedPromo = promo;
+      this.promoCode = promo.code;
+    } catch (error: unknown) {
+      console.error('Failed to apply checkout promo code.', error);
+      this.promoError = 'That promo code is invalid or inactive. Check the code and try again.';
+    } finally {
+      this.isApplyingPromo = false;
+    }
+  }
+
+  removePromo(): void {
+    this.appliedPromo = null;
+    this.promoCode = '';
+    this.promoError = '';
+  }
+
+  async onPostalCodeChange(postalCode: string): Promise<void> {
+    const request = ++this.postalLookupRequest;
+    this.isLookingUpPostalCode = false;
+    this.isPostalAddressPrefilled = false;
+    this.postalLookupError = '';
+    this.shippingDetails.city = '';
+    this.shippingDetails.state = '';
+    this.shippingDetails.country = '';
+
+    if (!/^[0-9]{6}$/.test(postalCode)) {
+      return;
+    }
+
+    this.isLookingUpPostalCode = true;
+    try {
+      const response = await fetch(
+        `https://api.postalpincode.in/pincode/${encodeURIComponent(postalCode)}`,
+      );
+      if (!response.ok) {
+        throw new Error(`PIN code lookup returned HTTP ${response.status}.`);
+      }
+
+      const address = this.parsePostalAddress(await response.json());
+      if (!address) {
+        throw new Error('PIN code lookup did not return a valid postal address.');
+      }
+      if (request !== this.postalLookupRequest) {
+        return;
+      }
+
+      this.shippingDetails.city = address.city;
+      this.shippingDetails.state = address.state;
+      this.shippingDetails.country = address.country;
+      this.isPostalAddressPrefilled = true;
+    } catch (error: unknown) {
+      if (request !== this.postalLookupRequest) {
+        return;
+      }
+      console.error('Failed to look up the shipping address for the PIN code.', error);
+      this.postalLookupError =
+        'We could not find this PIN code. Enter your city, state, and country manually.';
+    } finally {
+      if (request === this.postalLookupRequest) {
+        this.isLookingUpPostalCode = false;
+        this.changeDetectorRef.detectChanges();
+      }
+    }
+  }
 
   async startPayment(form: CheckoutForm): Promise<void> {
     if (form.invalid || this.cartService.cartItems().length === 0) {
@@ -65,6 +179,7 @@ export class Checkout {
         this.orderId = await this.supabase.createOrder(
           { ...this.shippingDetails },
           this.cartService.cartItems(),
+          this.appliedPromo?.code,
         );
       }
 
@@ -149,6 +264,42 @@ export class Checkout {
     }
 
     return this.razorpayScript;
+  }
+
+  private parsePostalAddress(value: unknown): PostalAddress | null {
+    if (!Array.isArray(value) || value.length === 0 || !this.isRecord(value[0])) {
+      return null;
+    }
+
+    const result = value[0];
+    if (result['Status'] !== 'Success' || !Array.isArray(result['PostOffice'])) {
+      return null;
+    }
+
+    const office = result['PostOffice'].find((item: unknown) => this.isRecord(item));
+    if (!this.isRecord(office)) {
+      return null;
+    }
+
+    const city = office['District'];
+    const state = office['State'];
+    const country = office['Country'];
+    if (
+      typeof city !== 'string' ||
+      typeof state !== 'string' ||
+      typeof country !== 'string' ||
+      !city.trim() ||
+      !state.trim() ||
+      !country.trim()
+    ) {
+      return null;
+    }
+
+    return { city: city.trim(), state: state.trim(), country: country.trim() };
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 }
 

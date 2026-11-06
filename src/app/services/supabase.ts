@@ -15,6 +15,7 @@ export interface OrderCustomer {
   apartment: string;
   city: string;
   state: string;
+  country: string;
   postalCode: string;
   note: string;
 }
@@ -38,8 +39,27 @@ export interface OrderPaymentStatus {
   paymentStatus: 'pending' | 'paid' | 'failed';
   subtotal: number;
   shippingFee: number;
+  discountAmount: number;
+  promoCode: string | null;
   total: number;
   paymentId: string | null;
+}
+
+export type AdminScreen = 'manage-products' | 'manage-orders' | 'manage-promo';
+
+export type PromoDiscountType = 'percentage' | 'fixed';
+
+export interface Promo {
+  id: string;
+  code: string;
+  discountType: PromoDiscountType;
+  discountValue: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PromoValidation extends Omit<Promo, 'id' | 'isActive' | 'createdAt'> {
+  discountAmount: number;
 }
 
 export const ORDER_STATUSES = [
@@ -88,6 +108,8 @@ export interface OrderTrackingDetails {
   createdAt: string;
   subtotal: number;
   shippingFee: number;
+  discountAmount: number;
+  promoCode: string | null;
   total: number;
   items: OrderTrackingItem[];
   events: OrderTrackingEvent[];
@@ -101,6 +123,7 @@ export interface AdminOrder extends Omit<OrderTrackingDetails, 'events'> {
   apartment: string | null;
   city: string;
   state: string;
+  country: string;
   postalCode: string;
   deliveryNote: string | null;
 }
@@ -115,6 +138,39 @@ function isOrderStatus(value: unknown): value is OrderStatus {
 
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
+}
+
+function isAdminScreen(value: unknown): value is AdminScreen {
+  return (
+    value === 'manage-products' ||
+    value === 'manage-orders' ||
+    value === 'manage-promo'
+  );
+}
+
+function isPromo(value: unknown): value is Promo {
+  return (
+    isRecord(value) &&
+    typeof value['id'] === 'string' &&
+    typeof value['code'] === 'string' &&
+    (value['discountType'] === 'percentage' || value['discountType'] === 'fixed') &&
+    typeof value['discountValue'] === 'number' &&
+    Number.isFinite(value['discountValue']) &&
+    typeof value['isActive'] === 'boolean' &&
+    typeof value['createdAt'] === 'string'
+  );
+}
+
+function isPromoValidation(value: unknown): value is PromoValidation {
+  return (
+    isRecord(value) &&
+    typeof value['code'] === 'string' &&
+    (value['discountType'] === 'percentage' || value['discountType'] === 'fixed') &&
+    typeof value['discountValue'] === 'number' &&
+    Number.isFinite(value['discountValue']) &&
+    typeof value['discountAmount'] === 'number' &&
+    Number.isFinite(value['discountAmount'])
+  );
 }
 
 function isProductVariant(value: unknown): value is Product['variantPrices'][number] {
@@ -132,7 +188,9 @@ function isProductVariant(value: unknown): value is Product['variantPrices'][num
   );
 }
 
-function isProduct(value: unknown): value is Product {
+function isProduct(
+  value: unknown,
+): value is Product & { is_approved: boolean; is_update?: boolean } {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
@@ -145,6 +203,8 @@ function isProduct(value: unknown): value is Product {
       (imageUrl) => typeof imageUrl === 'string' && imageUrl.trim().length > 0,
     ) &&
     typeof value['category'] === 'string' &&
+    typeof value['is_approved'] === 'boolean' &&
+    (value['is_update'] === undefined || typeof value['is_update'] === 'boolean') &&
     isNullableString(value['collection'] ?? null) &&
     isNullableString(value['idealFor'] ?? null) &&
     Array.isArray(value['variantPrices']) &&
@@ -193,6 +253,9 @@ function isOrderTrackingDetails(value: unknown): value is OrderTrackingDetails {
     Number.isFinite(value['subtotal']) &&
     typeof value['shippingFee'] === 'number' &&
     Number.isFinite(value['shippingFee']) &&
+    typeof value['discountAmount'] === 'number' &&
+    Number.isFinite(value['discountAmount']) &&
+    isNullableString(value['promoCode']) &&
     typeof value['total'] === 'number' &&
     Number.isFinite(value['total']) &&
     Array.isArray(value['items']) &&
@@ -215,6 +278,9 @@ function isAdminOrder(value: unknown): value is AdminOrder {
     Number.isFinite(value['subtotal']) &&
     typeof value['shippingFee'] === 'number' &&
     Number.isFinite(value['shippingFee']) &&
+    typeof value['discountAmount'] === 'number' &&
+    Number.isFinite(value['discountAmount']) &&
+    isNullableString(value['promoCode']) &&
     typeof value['total'] === 'number' &&
     Number.isFinite(value['total']) &&
     Array.isArray(value['items']) &&
@@ -226,6 +292,7 @@ function isAdminOrder(value: unknown): value is AdminOrder {
     isNullableString(value['apartment']) &&
     typeof value['city'] === 'string' &&
     typeof value['state'] === 'string' &&
+    typeof value['country'] === 'string' &&
     typeof value['postalCode'] === 'string' &&
     isNullableString(value['deliveryNote'])
   );
@@ -259,6 +326,22 @@ export class Supabase {
     }
 
     return true;
+  }
+
+  async getAdminScreenAccess(): Promise<AdminScreen[]> {
+    const { data, error } = await this.client.rpc('admin_session_screen_access', {
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isAdminScreen)) {
+      throw new Error('Administrator screen access did not return valid permissions.');
+    }
+
+    return data;
   }
 
   async signInOrderAdmin(userId: string, password: string): Promise<void> {
@@ -331,6 +414,104 @@ export class Supabase {
 
     if (!Array.isArray(data) || !data.every(isProduct)) {
       throw new Error('Product management lookup did not return valid product details.');
+    }
+
+    return data.map((product) => ({
+      ...product,
+      isApproved: product.is_approved,
+      isPendingUpdate: product.is_update === true,
+    }));
+  }
+
+  async getProductsPendingApproval(): Promise<Product[]> {
+    const { data, error } = await this.client.rpc('get_products_pending_approval', {
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isProduct)) {
+      throw new Error('Pending product lookup did not return valid product details.');
+    }
+
+    return data.map((product) => ({
+      ...product,
+      isApproved: product.is_approved,
+      isPendingUpdate: product.is_update === true,
+    }));
+  }
+
+  async approveProduct(productId: string): Promise<Product> {
+    const { data, error } = await this.client.rpc('approve_product', {
+      product_id_input: productId,
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+    if (!isProduct(data) || data['is_approved'] !== true) {
+      throw new Error('Product approval did not return an approved product.');
+    }
+
+    return {
+      ...data,
+      isApproved: true,
+      isPendingUpdate: data.is_update === true,
+    };
+  }
+
+  async getAdminPromos(): Promise<Promo[]> {
+    const { data, error } = await this.client.rpc('get_admin_promos', {
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!Array.isArray(data) || !data.every(isPromo)) {
+      throw new Error('Promo management lookup did not return valid promo details.');
+    }
+
+    return data;
+  }
+
+  async saveAdminPromo(promo: Omit<Promo, 'createdAt'>): Promise<Promo> {
+    const { data, error } = await this.client.rpc('save_admin_promo', {
+      promo_data: {
+        id: promo.id,
+        code: promo.code,
+        discountType: promo.discountType,
+        discountValue: promo.discountValue,
+        isActive: promo.isActive,
+      },
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+    if (!isPromo(data)) {
+      throw new Error('Promo save did not return a valid promo record.');
+    }
+
+    return data;
+  }
+
+  async validatePromoCode(code: string, subtotal: number): Promise<PromoValidation> {
+    const { data, error } = await this.client.rpc('validate_promo_code', {
+      promo_code_input: code.trim(),
+      subtotal_input: subtotal,
+    });
+
+    if (error) {
+      throw error;
+    }
+    if (!isPromoValidation(data)) {
+      throw new Error('That promo code is invalid or inactive.');
     }
 
     return data;
@@ -424,7 +605,7 @@ export class Supabase {
     return sessionToken;
   }
 
-  async createOrder(customer: OrderCustomer, items: CartItem[]): Promise<string> {
+  async createOrder(customer: OrderCustomer, items: CartItem[], promoCode?: string): Promise<string> {
     const { data, error } = await this.client.rpc('create_order', {
       order_data: {
         customer: {
@@ -436,6 +617,7 @@ export class Supabase {
           apartment: customer.apartment || null,
           city: customer.city,
           state: customer.state,
+          country: customer.country,
           postal_code: customer.postalCode,
           delivery_note: customer.note || null,
         },
@@ -449,6 +631,7 @@ export class Supabase {
           shirt_size: item.shirtSize ?? null,
           sleeve_length: item.sleeveLength ?? null,
         })),
+        promo_code: promoCode ?? null,
       },
     });
 
@@ -546,17 +729,29 @@ export class Supabase {
   }
 
   async getProducts(): Promise<Product[]> {
-    const { data, error } = await this.client.from(this.table).select('*');
+    const { data, error } = await this.client
+      .from(this.table)
+      .select('*')
+      .eq('is_approved', true);
 
     if (error) {
       throw error;
     }
 
-    return data ?? [];
+    if (!Array.isArray(data) || !data.every(isProduct)) {
+      throw new Error('Product catalog lookup did not return valid product details.');
+    }
+
+    return data.map((product) => ({ ...product, isApproved: product.is_approved }));
   }
 
   async getProductById(id: string): Promise<Product> {
-    const { data, error } = await this.client.from(this.table).select('*').eq('id', id).maybeSingle();
+    const { data, error } = await this.client
+      .from(this.table)
+      .select('*')
+      .eq('id', id)
+      .eq('is_approved', true)
+      .maybeSingle();
 
     if (error) {
       throw error;
@@ -566,7 +761,15 @@ export class Supabase {
       throw new Error(`Product with id "${id}" was not found.`);
     }
 
-    return data;
+    if (!isProduct(data)) {
+      throw new Error(`Product with id "${id}" returned invalid details.`);
+    }
+
+    return {
+      ...data,
+      isApproved: data.is_approved,
+      isPendingUpdate: data.is_update === true,
+    };
   }
 
   async createProduct(product: NewProduct): Promise<Product> {
@@ -597,7 +800,11 @@ export class Supabase {
       throw new Error('Product save did not return a valid product record.');
     }
 
-    return data;
+    return {
+      ...data,
+      isApproved: data.is_approved,
+      isPendingUpdate: data.is_update === true,
+    };
   }
 
   async deleteProduct(id: string): Promise<void> {
