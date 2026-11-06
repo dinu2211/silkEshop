@@ -3,7 +3,7 @@ import { Component, inject, PLATFORM_ID, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Supabase, type Promo, type PromoDiscountType } from '../services/supabase';
-import type { Product } from '../cart-service';
+import type { Product, ProductVariantPrice } from '../cart-service';
 
 interface PromoDraft {
   code: string;
@@ -34,10 +34,12 @@ export class ManagePromo {
   readonly hasPromoAccess = signal(false);
   readonly activeTab = signal<'approval' | 'promos'>('approval');
   readonly pendingProducts = signal<Product[]>([]);
+  readonly approvedProducts = signal<Product[]>([]);
   readonly promos = signal<Promo[]>([]);
   readonly isLoading = signal(false);
   readonly isLoadingPending = signal(false);
   readonly approvingProductId = signal<string | null>(null);
+  readonly rejectingProductId = signal<string | null>(null);
   readonly isSigningIn = signal(false);
   readonly isSaving = signal(false);
   readonly updatingPromoId = signal<string | null>(null);
@@ -88,6 +90,7 @@ export class ManagePromo {
       this.isAdmin.set(false);
       this.hasPromoAccess.set(false);
       this.pendingProducts.set([]);
+      this.approvedProducts.set([]);
       this.promos.set([]);
       this.closeEditor();
     } catch (error: unknown) {
@@ -214,7 +217,12 @@ export class ManagePromo {
     this.errorMessage.set('');
     this.successMessage.set('');
     try {
-      this.pendingProducts.set(await this.supabase.getProductsPendingApproval());
+      const [pendingProducts, approvedProducts] = await Promise.all([
+        this.supabase.getProductsPendingApproval(),
+        this.supabase.getAdminProducts(),
+      ]);
+      this.pendingProducts.set(pendingProducts);
+      this.approvedProducts.set(approvedProducts);
     } catch (error: unknown) {
       console.error('Failed to load products awaiting approval.', error);
       this.errorMessage.set('Products awaiting approval could not be loaded. Please try again.');
@@ -223,8 +231,40 @@ export class ManagePromo {
     }
   }
 
+  isPendingProductFieldChanged(
+    product: Product,
+    field: 'name' | 'category' | 'description',
+  ): boolean {
+    if (!product.isPendingUpdate) {
+      return false;
+    }
+
+    const approvedProduct = this.approvedProducts().find(({ id }) => id === product.id);
+    return approvedProduct !== undefined && approvedProduct[field] !== product[field];
+  }
+
+  isPendingVariantFieldChanged(
+    product: Product,
+    variant: ProductVariantPrice,
+    field: keyof ProductVariantPrice,
+  ): boolean {
+    if (!product.isPendingUpdate) {
+      return false;
+    }
+
+    const approvedProduct = this.approvedProducts().find(({ id }) => id === product.id);
+    if (!approvedProduct) {
+      return false;
+    }
+
+    const approvedVariant = approvedProduct.variantPrices.find((candidate) =>
+      this.hasSameVariantOptions(candidate, variant),
+    );
+    return approvedVariant === undefined || approvedVariant[field] !== variant[field];
+  }
+
   async approveProduct(product: Product): Promise<void> {
-    if (this.approvingProductId() !== null) {
+    if (this.approvingProductId() !== null || this.rejectingProductId() !== null) {
       return;
     }
 
@@ -242,6 +282,32 @@ export class ManagePromo {
       this.errorMessage.set('Product could not be approved. Please refresh and try again.');
     } finally {
       this.approvingProductId.set(null);
+    }
+  }
+
+  async rejectProduct(product: Product): Promise<void> {
+    if (this.approvingProductId() !== null || this.rejectingProductId() !== null) {
+      return;
+    }
+
+    this.rejectingProductId.set(product.id);
+    this.errorMessage.set('');
+    this.successMessage.set('');
+    try {
+      await this.supabase.rejectPendingProduct(product.id);
+      this.pendingProducts.update((products) =>
+        products.filter((pendingProduct) => pendingProduct.id !== product.id),
+      );
+      this.successMessage.set(
+        product.isPendingUpdate
+          ? `Pending changes to ${product.name} have been rejected. The approved product remains unchanged.`
+          : `${product.name} has been rejected and removed from the approval queue.`,
+      );
+    } catch (error: unknown) {
+      console.error('Failed to reject pending product changes.', error);
+      this.errorMessage.set('Product changes could not be rejected. Please refresh and try again.');
+    } finally {
+      this.rejectingProductId.set(null);
     }
   }
 
@@ -274,5 +340,17 @@ export class ManagePromo {
     if (this.hasPromoAccess()) {
       await Promise.all([this.loadPendingProducts(), this.loadPromos()]);
     }
+  }
+
+  private hasSameVariantOptions(
+    first: ProductVariantPrice,
+    second: ProductVariantPrice,
+  ): boolean {
+    return (
+      first.dhotiSize === second.dhotiSize &&
+      first.shirtSize === second.shirtSize &&
+      first.sleeveLength === second.sleeveLength &&
+      first.dhotiType === second.dhotiType
+    );
   }
 }

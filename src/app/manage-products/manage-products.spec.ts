@@ -138,4 +138,13 @@ describe('ManageProducts', () => {
       'Product changes submitted and are waiting for admin approval.',
     );
   });
+
+  it('does not allow editing a product with changes waiting for approval', () => {
+    const pendingProduct = { ...product, isPendingUpdate: true };
+
+    component.editProduct(pendingProduct);
+
+    expect(component.isEditorOpen()).toBeFalse();
+    expect(component.errorMessage()).toContain('changes are awaiting approval');
+  });
 });

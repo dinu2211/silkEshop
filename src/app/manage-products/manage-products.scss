@@ -523,6 +523,26 @@ select:focus-visible {
   font-weight: 600;
 }
 
+.status-pill {
+  display: inline-flex;
+  margin-bottom: 5px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: #fff0b8;
+  color: #704d08;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.pending-edit-note {
+  grid-area: edit;
+  max-width: 150px;
+  color: #8a6711;
+  font-size: 0.69rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .product-details h3 {
   margin: 0;
   color: #393329;

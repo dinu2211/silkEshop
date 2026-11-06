@@ -131,29 +131,71 @@
                     <span class="status-pill">
                       {{ product.isPendingUpdate ? 'Changes awaiting approval' : 'New product' }}
                     </span>
-                    <h3>{{ product.name }}</h3>
-                    <p class="pending-category">{{ product.category }}</p>
-                    <p class="pending-description">{{ product.description }}</p>
+                    <h3 [class.changed-value]="isPendingProductFieldChanged(product, 'name')">
+                      {{ product.name }}
+                    </h3>
+                    <p
+                      class="pending-category"
+                      [class.changed-value]="isPendingProductFieldChanged(product, 'category')"
+                    >
+                      {{ product.category }}
+                    </p>
+                    <p
+                      class="pending-description"
+                      [class.changed-value]="isPendingProductFieldChanged(product, 'description')"
+                    >
+                      {{ product.description }}
+                    </p>
                     <div class="variant-summary">
                       @for (variant of product.variantPrices; track $index) {
                         <span>
-                          {{ variant.price | currency: 'INR' }} · {{ variant.quantity }} in stock
-                          @if (variant.dhotiSize) { · {{ variant.dhotiSize }} }
-                          @if (variant.shirtSize) { · {{ variant.shirtSize }} }
-                          @if (variant.sleeveLength) { · {{ variant.sleeveLength }} }
-                          @if (variant.dhotiType) { · {{ variant.dhotiType }} }
+                          <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'price')">
+                            {{ variant.price | currency: 'INR' }}
+                          </span>
+                          ·
+                          <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'quantity')">
+                            {{ variant.quantity }} in stock
+                          </span>
+                          @if (variant.dhotiSize) {
+                            · <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'dhotiSize')">{{ variant.dhotiSize }}</span>
+                          }
+                          @if (variant.shirtSize) {
+                            · <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'shirtSize')">{{ variant.shirtSize }}</span>
+                          }
+                          @if (variant.sleeveLength) {
+                            · <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'sleeveLength')">{{ variant.sleeveLength }}</span>
+                          }
+                          @if (variant.dhotiType) {
+                            · <span [class.changed-value]="isPendingVariantFieldChanged(product, variant, 'dhotiType')">{{ variant.dhotiType }}</span>
+                          }
                         </span>
                       }
                     </div>
                   </div>
-                  <button
-                    class="primary-button approve-button"
-                    type="button"
-                    [disabled]="approvingProductId() !== null"
-                    (click)="approveProduct(product)"
-                  >
-                    {{ approvingProductId() === product.id ? 'Approving…' : 'Approve product' }}
-                  </button>
+                  <div class="approval-actions">
+                    <button
+                      class="secondary-button reject-button"
+                      type="button"
+                      [disabled]="approvingProductId() !== null || rejectingProductId() !== null"
+                      (click)="rejectProduct(product)"
+                    >
+                      {{
+                        rejectingProductId() === product.id
+                          ? 'Rejecting…'
+                          : product.isPendingUpdate
+                            ? 'Reject changes'
+                            : 'Reject product'
+                      }}
+                    </button>
+                    <button
+                      class="primary-button approve-button"
+                      type="button"
+                      [disabled]="approvingProductId() !== null || rejectingProductId() !== null"
+                      (click)="approveProduct(product)"
+                    >
+                      {{ approvingProductId() === product.id ? 'Approving…' : 'Approve product' }}
+                    </button>
+                  </div>
                 </article>
               }
             </div>

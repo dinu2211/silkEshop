@@ -328,6 +328,9 @@
                   />
                 </div>
                 <div class="product-details">
+                  @if (product.isPendingUpdate) {
+                    <span class="status-pill pending-update">Changes awaiting approval</span>
+                  }
                   <div class="product-tags">
                     <span>{{ product.category }}</span>
                     @if (product.collection) {
@@ -343,14 +346,18 @@
                   <span>{{ totalQuantity(product) }} in stock · {{ product.variantPrices.length }} variant(s)</span>
                 </div>
                 <span class="image-count">{{ product.imageUrls.length }} images</span>
-                <button
-                  class="primary-button edit-button"
-                  type="button"
-                  [attr.aria-label]="'Edit ' + product.name"
-                  (click)="editProduct(product)"
-                >
-                  Edit
-                </button>
+                @if (product.isPendingUpdate) {
+                  <span class="pending-edit-note">Editing is unavailable while changes await approval.</span>
+                } @else {
+                  <button
+                    class="primary-button edit-button"
+                    type="button"
+                    [attr.aria-label]="'Edit ' + product.name"
+                    (click)="editProduct(product)"
+                  >
+                    Edit
+                  </button>
+                }
               </article>
             }
           </div>

@@ -32,19 +32,23 @@ describe('ManagePromo', () => {
     supabase = jasmine.createSpyObj<Supabase>('Supabase', [
       'isOrderAdminSignedIn',
       'getAdminScreenAccess',
+      'getAdminProducts',
       'signInOrderAdmin',
       'signOutOrderAdmin',
       'getAdminPromos',
       'saveAdminPromo',
       'getProductsPendingApproval',
       'approveProduct',
+      'rejectPendingProduct',
     ]);
     supabase.isOrderAdminSignedIn.and.resolveTo(true);
     supabase.getAdminScreenAccess.and.resolveTo(['manage-promo']);
+    supabase.getAdminProducts.and.resolveTo([]);
     supabase.getAdminPromos.and.resolveTo([promo]);
     supabase.saveAdminPromo.and.resolveTo(promo);
     supabase.getProductsPendingApproval.and.resolveTo([pendingProduct]);
     supabase.approveProduct.and.resolveTo({ ...pendingProduct, isApproved: true });
+    supabase.rejectPendingProduct.and.resolveTo();
 
     await TestBed.configureTestingModule({
       imports: [ManagePromo],
@@ -94,6 +98,29 @@ describe('ManagePromo', () => {
     expect(supabase.approveProduct).toHaveBeenCalledWith(pendingProduct.id);
     expect(component.pendingProducts()).toEqual([]);
     expect(component.successMessage()).toContain('has been approved');
+  });
+
+  it('rejects pending changes and removes them from the review queue', async () => {
+    const productWithPendingChanges = { ...pendingProduct, isPendingUpdate: true };
+    component.pendingProducts.set([productWithPendingChanges]);
+
+    await component.rejectProduct(productWithPendingChanges);
+
+    expect(supabase.rejectPendingProduct).toHaveBeenCalledWith(pendingProduct.id);
+    expect(component.pendingProducts()).toEqual([]);
+    expect(component.successMessage()).toContain('approved product remains unchanged');
+  });
+
+  it('highlights only the product values that differ from the approved version', () => {
+    component.approvedProducts.set([{ ...pendingProduct, name: 'Previous name', isApproved: true }]);
+    component.pendingProducts.set([
+      { ...pendingProduct, name: 'Updated name', isPendingUpdate: true },
+    ]);
+    fixture.detectChanges();
+
+    const changedValues = fixture.nativeElement.querySelectorAll('.changed-value');
+    expect(changedValues.length).toBe(1);
+    expect(changedValues[0].textContent).toContain('Updated name');
   });
 
   it('creates a promo with a normalized code and the selected discount settings', async () => {

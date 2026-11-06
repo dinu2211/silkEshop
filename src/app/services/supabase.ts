@@ -463,6 +463,20 @@ export class Supabase {
     };
   }
 
+  async rejectPendingProduct(productId: string): Promise<void> {
+    const { data, error } = await this.client.rpc('reject_pending_product', {
+      product_id_input: productId,
+      session_token_input: this.requireAdminSessionToken(),
+    });
+
+    if (error) {
+      throw error;
+    }
+    if (data !== productId) {
+      throw new Error('Product rejection did not return the rejected product ID.');
+    }
+  }
+
   async getAdminPromos(): Promise<Promo[]> {
     const { data, error } = await this.client.rpc('get_admin_promos', {
       session_token_input: this.requireAdminSessionToken(),

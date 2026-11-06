@@ -173,6 +173,11 @@ export class ManageProducts {
   }
 
   editProduct(product: Product): void {
+    if (product.isPendingUpdate) {
+      this.errorMessage.set('This product cannot be edited while changes are awaiting approval.');
+      return;
+    }
+
     this.draft = {
       name: product.name,
       description: product.description,

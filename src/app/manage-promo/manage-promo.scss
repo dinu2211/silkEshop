@@ -332,8 +332,27 @@ h1,
   font-size: 0.7rem;
 }
 
-.approve-button {
+.approval-actions {
+  display: flex;
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.approve-button,
+.reject-button {
+  flex: 0 0 auto;
+}
+
+.reject-button {
+  border-color: #e8c9c1;
+  color: #994e40;
+}
+
+.reject-button:hover:not(:disabled) {
+  border-color: #d7a99e;
+  background: #fff5f2;
 }
 
 .editor-card {
@@ -467,6 +486,14 @@ h1,
   color: #34704a;
 }
 
+.changed-value {
+  border-radius: 3px;
+  background: #fff0b8;
+  box-shadow: 0 0 0 2px #fff0b8;
+  color: #704d08;
+  font-weight: 700;
+}
+
 .discount-description {
   margin: 5px 0 2px;
   color: #73684d;
@@ -567,8 +594,12 @@ h1,
     flex: 1 1 calc(100% - 100px);
   }
 
-  .approve-button {
+  .approval-actions {
     width: 100%;
+  }
+
+  .approval-actions button {
+    flex: 1 1 auto;
   }
 
   .promo-info {
