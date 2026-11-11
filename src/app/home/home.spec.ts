@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideRouter } from '@angular/router';
 import { Product, ProductCategory, ProductCollection, ProductIdealFor } from '../cart-service';
 import { ProductService } from '../product-service';
 import { Supabase } from '../services/supabase';
@@ -39,6 +40,7 @@ describe('Home', () => {
     await TestBed.configureTestingModule({
       imports: [Home],
       providers: [
+        provideRouter([]),
         { provide: Supabase, useValue: supabase },
         { provide: ProductService, useValue: { products: signal(products) } },
       ],
@@ -47,12 +49,21 @@ describe('Home', () => {
 
     fixture = TestBed.createComponent(Home);
     component = fixture.componentInstance;
+    fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('starts in the same loading state before client product loading begins', () => {
+    const initialFixture = TestBed.createComponent(Home);
+
+    expect(initialFixture.componentInstance.loading()).toBeTrue();
+
+    initialFixture.destroy();
   });
 
   it('shows only products in the selected collection', () => {
@@ -79,6 +90,39 @@ describe('Home', () => {
     expect(fixture.nativeElement.querySelectorAll('.example-card').length).toBe(
       component.products().length,
     );
+  });
+
+  it('filters the catalog from the category tiles', () => {
+    component.selectShopCategory('silk-dhotis');
+
+    expect(component.filteredProducts.map((product) => product.id)).toEqual(['silk-dhoti-01']);
+    expect(component.shopCategoryLabel('silk-dhotis')).toBe('Silk Dhoti');
+  });
+
+  it('scrolls the product catalog into view when the hero banner is clicked', () => {
+    const catalog = fixture.nativeElement.querySelector('#shop-products') as HTMLElement;
+    spyOn(catalog, 'scrollIntoView');
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    fixture.nativeElement.querySelector('.hero-banner-link').dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeTrue();
+    expect(catalog.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+  });
+
+  it('links the mobile premium promo to the premium collection', () => {
+    const promo = fixture.nativeElement.querySelector('.premium-promo-link') as HTMLAnchorElement;
+
+    expect(promo.getAttribute('href')).toBe('/premium-collection');
+    expect(promo.querySelector('img')?.getAttribute('src')).toBe('assets/images/premium.jpeg');
+  });
+
+  it('clears the category filter when a collection is selected', () => {
+    component.selectShopCategory('silk-dhotis');
+    component.selectCollection(ProductCollection.Function);
+
+    expect(component.selectedShopCategory).toBeNull();
+    expect(component.filteredProducts.map((product) => product.id)).toEqual(['plain-dhoti-01']);
   });
 
   it('offers the requested collections and filters uncategorized products separately', () => {

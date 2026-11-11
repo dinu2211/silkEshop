@@ -1,107 +1,195 @@
-<div class="container spacecontainer">
-  <!-- <app-search></app-search> -->
-  <details class="category-section">
-    <summary class="category-toggle">
-      <span class="category-heading">
-        <span class="category-eyebrow">Find your style</span>
-        <span class="category-title" id="category-heading">Shop by collection</span>
+<div class="storefront">
+  <section class="hero-banner" aria-label="Featured Weave Made collection">
+    <a class="hero-banner-link" href="#shop-products" (click)="scrollToProducts($event, catalog)">
+      <img
+        src="assets/images/banner-branded.jpeg"
+        alt="Weave Made: Tradition in Every Thread. Premium shirts, elegant dhoti, luxurious silk dhoti. Shop now."
+      />
+    </a>
+  </section>
+
+  <section class="premium-promo" aria-label="Explore the premium collection">
+    <a class="premium-promo-link" routerLink="/premium-collection">
+      <img src="assets/images/premium.jpeg" alt="" />
+      <span class="premium-promo-copy">
+        <span class="premium-promo-eyebrow">Woven for life's finest moments</span>
+        <span class="premium-promo-title">Discover the Premium Collection</span>
+        <span class="premium-promo-action">Explore the collection <span aria-hidden="true">→</span></span>
       </span>
-      <span class="category-current">
-        {{
-          selectedCollection === 'unassigned'
-            ? 'Collection not set'
-            : selectedCollection ?? 'All collections'
-        }}
+    </a>
+  </section>
+
+  <!-- <section class="category-tiles" aria-label="Shop product categories">
+    <button
+      *ngFor="let category of shopCategories"
+      type="button"
+      class="category-tile"
+      [class.active]="selectedShopCategory === category.id"
+      [attr.aria-pressed]="selectedShopCategory === category.id"
+      (click)="selectShopCategory(category.id)"
+    >
+      <span class="tile-image">
+        @if (categoryImage(category.id); as imageUrl) {
+          <img [src]="imageUrl" [alt]="category.label" />
+        } @else {
+          <span class="tile-monogram" aria-hidden="true">{{ category.monogram }}</span>
+        }
       </span>
-      <span class="category-chevron" aria-hidden="true"></span>
-    </summary>
-    <div class="category-panel" role="group" aria-labelledby="category-heading">
-      <button
-        type="button"
-        class="categoryButton"
-        [class.selected]="selectedCollection === null"
-        [attr.aria-pressed]="selectedCollection === null"
-        (click)="selectCollection(null)"
-      >
-        All collections
-      </button>
-      <button
-        *ngFor="let collection of collections"
-        type="button"
-        class="categoryButton"
-        [class.selected]="selectedCollection === collection"
-        [attr.aria-pressed]="selectedCollection === collection"
-        (click)="selectCollection(collection)"
-      >
-        {{ collection }}
-      </button>
-      @if (hasUnassignedProducts) {
-        <button
-          type="button"
-          class="categoryButton"
-          [class.selected]="selectedCollection === 'unassigned'"
-          [attr.aria-pressed]="selectedCollection === 'unassigned'"
-          (click)="selectCollection('unassigned')"
-        >
-          Collection not set
-        </button>
-      }
-    </div>
-  </details>
-  <div class="row">
-    <div class="col">
-      <p class="latest">LATEST PRODUCTS</p>
-    </div>
-  </div>
-  @if (loading() && products().length === 0) {
-    <p role="status">Loading products...</p>
-  }
-  @if (error(); as error) {
-    <div role="alert">
-      <p>{{ error }}</p>
-      <button type="button" (click)="loadProducts()">Try again</button>
-    </div>
-  }
-  @if (!loading() && !error() && filteredProducts.length === 0) {
-    <p role="status">No products in this collection yet.</p>
-  }
-  <div class="row">
-    <div class="col-md-3 mb-3" *ngFor="let product of filteredProducts">
-      <mat-card class="example-card">
-        <div class="product-image-panel">
-          @if (product.imageUrls[0]) {
-            <img class="product-image" [src]="product.imageUrls[0]" [alt]="product.name" />
-          } @else {
-            <div class="image-placeholder" aria-hidden="true">Image unavailable</div>
-          }
-        </div>
-        <mat-card-content class="product-content">
-          <p class="product-collection">{{ product.collection ?? 'Collection not set' }}</p>
-          <p class="product-category">{{ product.category }}</p>
-          <h3>{{ product.name }}</h3>
-          <p class="product-description">{{ product.description }}</p>
-          @if (product.idealFor) {
-            <p class="product-ideal-for">Ideal for {{ product.idealFor }}</p>
-          }
-          <div class="product-purchase">
-            <strong>
-              @if (product.variantPrices.length > 1) { From }
-              {{ startingPrice(product) | currency: 'INR' : 'symbol' : '1.0-0' }}
-            </strong>
-            <button
-              type="button"
-              class="add-to-cart"
-              [attr.aria-label]="'View details for ' + product.name"
-              (click)="openProductDetails(product)"
-            >
-              View details
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
+      <span class="tile-footer">
+        <span>{{ category.label }}</span>
+        <span class="tile-arrow" aria-hidden="true">→</span>
+      </span>
+    </button>
+  </section> -->
+  <section #catalog class="catalog" id="shop-products" aria-labelledby="catalog-title">
+    <div class="section-title">
+      <span class="title-rule" aria-hidden="true"></span>
+      <div>
+        <p class="eyebrow">Made for your moments</p>
+        <h2 id="catalog-title">
+          {{
+            selectedShopCategory
+              ? shopCategoryLabel(selectedShopCategory)
+              : selectedCollection === 'unassigned'
+                ? 'Collection not set'
+                : selectedCollection
+                ? selectedCollection
+                : 'Explore our collection'
+          }}
+        </h2>
+      </div>
+      <span class="title-rule" aria-hidden="true"></span>
+      <span class="catalog-count">{{ filteredProducts.length }} styles</span>
     </div>
 
-  </div>
+    <details class="category-section">
+      <summary class="category-toggle">
+        <span class="category-heading">
+          <span class="category-eyebrow">Find your style</span>
+          <span class="category-title" id="collection-heading">Shop by collection</span>
+        </span>
+        <span class="category-current">
+          {{
+            selectedCollection === 'unassigned'
+              ? 'Collection not set'
+              : selectedCollection ?? 'All collections'
+          }}
+        </span>
+        <span class="category-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="category-panel" role="group" aria-labelledby="collection-heading">
+        <button
+          type="button"
+          class="collection-button"
+          [class.selected]="selectedCollection === null"
+          [attr.aria-pressed]="selectedCollection === null"
+          (click)="selectCollection(null)"
+        >
+          All collections
+        </button>
+        <button
+          *ngFor="let collection of collections"
+          type="button"
+          class="collection-button"
+          [class.selected]="selectedCollection === collection"
+          [attr.aria-pressed]="selectedCollection === collection"
+          (click)="selectCollection(collection)"
+        >
+          {{ collection }}
+        </button>
+        @if (hasUnassignedProducts) {
+          <button
+            type="button"
+            class="collection-button"
+            [class.selected]="selectedCollection === 'unassigned'"
+            [attr.aria-pressed]="selectedCollection === 'unassigned'"
+            (click)="selectCollection('unassigned')"
+          >
+            Collection not set
+          </button>
+        }
+      </div>
+    </details>
+
+    @if (loading() && products().length === 0) {
+      <p class="catalog-message" role="status">Finding your favourites...</p>
+    }
+    @if (error(); as error) {
+      <div class="catalog-message catalog-error" role="alert">
+        <p>{{ error }}</p>
+        <button type="button" class="retry-button" (click)="loadProducts()">Try again</button>
+      </div>
+    }
+    @if (!loading() && !error() && filteredProducts.length === 0) {
+      <p class="catalog-message" role="status">No products in this selection yet.</p>
+    }
+
+    <div class="product-grid">
+      <article class="product-item" *ngFor="let product of filteredProducts">
+        <mat-card class="example-card">
+          <div class="product-image-panel">
+            @if (product.imageUrls[0]) {
+              <img class="product-image" [src]="product.imageUrls[0]" [alt]="product.name" />
+            } @else {
+              <div class="image-placeholder" aria-hidden="true">Image coming soon</div>
+            }
+            <span class="image-category">{{ product.category }}</span>
+          </div>
+          <mat-card-content class="product-content">
+            <p class="product-collection">{{ product.collection ?? 'New arrival' }}</p>
+            <h3>{{ product.name }}</h3>
+            <p class="product-description">{{ product.description }}</p>
+            @if (product.idealFor) {
+              <p class="product-ideal-for">Ideal for {{ product.idealFor }}</p>
+            }
+            <div class="product-purchase">
+              <strong class="price-label">
+                @if (product.variantPrices.length > 1) { From }
+                {{ startingPrice(product) | currency: 'INR' : 'symbol' : '1.0-0' }}
+              </strong>
+              <button
+                type="button"
+                class="add-to-cart"
+                [attr.aria-label]="'View details for ' + product.name"
+                (click)="openProductDetails(product)"
+              >
+                View details <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </article>
+    </div>
+  </section>
+
+  <!-- <section class="silk-banner" id="silk-dhoti-banner" aria-labelledby="silk-banner-title">
+    <div class="silk-banner-copy">
+      <p class="eyebrow">THE CELEBRATION COLLECTION</p>
+      <h2 id="silk-banner-title">A tradition worth<br />dressing up for.</h2>
+      <p>Discover premium silk dhotis, woven for your most meaningful occasions.</p>
+      <a class="banner-link" href="#shop-products" (click)="selectShopCategory('silk-dhotis')">
+        Shop silk dhotis <span aria-hidden="true">→</span>
+      </a>
+    </div>
+    <div class="silk-banner-image" aria-hidden="true">
+      <img src="assets/images/silk-dhoti-01.jpeg" alt="" />
+    </div>
+  </section> -->
+
+  <!-- <section class="shop-promises" aria-label="The Weave Made difference">
+    <div>
+      <span class="promise-icon" aria-hidden="true">✧</span>
+      <span><strong>Thoughtful fabrics</strong><small>Made to be worn and loved</small></span>
+    </div>
+    <div>
+      <span class="promise-icon" aria-hidden="true">⌁</span>
+      <span><strong>For every occasion</strong><small>From everyday to celebration</small></span>
+    </div>
+    <div>
+      <span class="promise-icon" aria-hidden="true">◇</span>
+      <span><strong>Easy to explore</strong><small>Find your style, your way</small></span>
+    </div>
+  </section> -->
 </div>
 
 @if (selectedProduct; as product) {

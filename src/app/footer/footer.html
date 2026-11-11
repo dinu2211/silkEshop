@@ -14,8 +14,12 @@
     <nav class="footer-navigation" aria-label="Footer navigation">
       <h2>Explore</h2>
       <a routerLink="/">Home</a>
+      <a routerLink="/about">About</a>
+      <a routerLink="/premium-collection">Premium</a>
       <a routerLink="/track">Track order</a>
       <a routerLink="/contact">Contact</a>
+      <a routerLink="/terms-condition" fragment="return-policy-title">Return Policy</a>
+      <a routerLink="/terms-condition" fragment="terms-title">Terms &amp; Conditions</a>
     </nav>
 
     <section class="footer-help" aria-labelledby="footer-help-title">
@@ -27,13 +31,6 @@
       </a>
     </section>
   </div>
-
-  <nav class="footer-mobile-navigation" aria-label="Footer navigation">
-    <a routerLink="/">Home</a>
-    <a routerLink="/about">About</a>
-    <a routerLink="/track">Track order</a>
-    <a routerLink="/contact">Contact</a>
-  </nav>
 
   <div class="footer-bottom">
     <p>&copy; {{ currentYear }} Weave Made. All rights reserved.</p>

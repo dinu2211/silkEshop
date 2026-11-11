@@ -531,6 +531,68 @@
   line-height: 1.5;
 }
 
+.terms-consent {
+  margin: 0 0 16px;
+  padding: 12px;
+  border: 1px solid #e9e4d7;
+  border-radius: 6px;
+  background: #fbfaf6;
+}
+
+.terms-consent > label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #625e54;
+  cursor: pointer;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.terms-consent input {
+  flex: 0 0 auto;
+  margin: 3px 0 0;
+  accent-color: #817044;
+}
+
+.terms-consent a {
+  color: #6b5b35;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+.legal-link {
+  display: inline-block;
+  margin: 8px 0 0 22px;
+  color: #6b5b35;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+.terms-disclosure {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid #eeeae1;
+}
+
+.terms-disclosure summary {
+  width: fit-content;
+  color: #74694e;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.terms-disclosure app-terms-condition {
+  display: block;
+  max-height: 300px;
+  margin-top: 9px;
+  overflow: auto;
+  border: 1px solid #eeeae1;
+  border-radius: 6px;
+}
+
 .form-error {
   margin: 0 0 12px;
   color: #a34f3d;
@@ -575,7 +637,9 @@
 
 .payment-button:focus-visible,
 .primary-link:focus-visible,
-.back-link:focus-visible {
+.back-link:focus-visible,
+.terms-consent a:focus-visible,
+.terms-disclosure summary:focus-visible {
   outline: 3px solid rgba(129, 112, 68, 0.28);
   outline-offset: 3px;
 }

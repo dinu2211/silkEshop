@@ -23,6 +23,7 @@ interface ProductDraft {
   images: Array<{ url: string; file?: File }>;
   category: ProductCategory;
   collection: ProductCollection | '';
+  isPremium: boolean;
   idealFor: ProductIdealFor | '';
   variantPrices: Array<{
     dhotiSize: DhotiSize | '';
@@ -49,6 +50,7 @@ const emptyDraft = (): ProductDraft => ({
   images: [],
   category: ProductCategory.SilkDhoti,
   collection: '',
+  isPremium: false,
   idealFor: '',
   variantPrices: [emptyVariant()],
 });
@@ -184,6 +186,7 @@ export class ManageProducts {
       images: product.imageUrls.map((url) => ({ url })),
       category: product.category,
       collection: product.collection ?? '',
+      isPremium: product.isPremium === true,
       idealFor: product.idealFor ?? '',
       variantPrices: (product.variantPrices ?? []).map((variant) => ({
         dhotiSize: variant.dhotiSize ?? '',
@@ -324,6 +327,7 @@ export class ManageProducts {
       imageUrls: [],
       category: this.draft.category,
       collection: this.draft.collection || null,
+      isPremium: this.draft.isPremium,
       idealFor: this.draft.idealFor || null,
       variantPrices: this.draft.variantPrices.map((variant) => {
         const variantPrice: ProductVariantPrice = {

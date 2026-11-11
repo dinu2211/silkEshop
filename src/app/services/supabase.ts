@@ -190,7 +190,11 @@ function isProductVariant(value: unknown): value is Product['variantPrices'][num
 
 function isProduct(
   value: unknown,
-): value is Product & { is_approved: boolean; is_update?: boolean } {
+): value is Product & {
+  is_approved: boolean;
+  is_premium?: boolean;
+  is_update?: boolean;
+} {
   return (
     isRecord(value) &&
     typeof value['id'] === 'string' &&
@@ -204,6 +208,7 @@ function isProduct(
     ) &&
     typeof value['category'] === 'string' &&
     typeof value['is_approved'] === 'boolean' &&
+    (value['is_premium'] === undefined || typeof value['is_premium'] === 'boolean') &&
     (value['is_update'] === undefined || typeof value['is_update'] === 'boolean') &&
     isNullableString(value['collection'] ?? null) &&
     isNullableString(value['idealFor'] ?? null) &&
@@ -418,6 +423,7 @@ export class Supabase {
 
     return data.map((product) => ({
       ...product,
+      isPremium: product.is_premium === true,
       isApproved: product.is_approved,
       isPendingUpdate: product.is_update === true,
     }));
@@ -438,6 +444,7 @@ export class Supabase {
 
     return data.map((product) => ({
       ...product,
+      isPremium: product.is_premium === true,
       isApproved: product.is_approved,
       isPendingUpdate: product.is_update === true,
     }));
@@ -458,6 +465,7 @@ export class Supabase {
 
     return {
       ...data,
+      isPremium: data.is_premium === true,
       isApproved: true,
       isPendingUpdate: data.is_update === true,
     };
@@ -756,7 +764,11 @@ export class Supabase {
       throw new Error('Product catalog lookup did not return valid product details.');
     }
 
-    return data.map((product) => ({ ...product, isApproved: product.is_approved }));
+    return data.map((product) => ({
+      ...product,
+      isPremium: product.is_premium === true,
+      isApproved: product.is_approved,
+    }));
   }
 
   async getProductById(id: string): Promise<Product> {
@@ -781,6 +793,7 @@ export class Supabase {
 
     return {
       ...data,
+      isPremium: data.is_premium === true,
       isApproved: data.is_approved,
       isPendingUpdate: data.is_update === true,
     };
@@ -816,6 +829,7 @@ export class Supabase {
 
     return {
       ...data,
+      isPremium: data.is_premium === true,
       isApproved: data.is_approved,
       isPendingUpdate: data.is_update === true,
     };

@@ -143,6 +143,7 @@ describe('Checkout', () => {
     TestBed.inject(CartService).cartItems.set([
       { id: 'product-1', name: 'Silk Dhoti', price: 1200, quantity: 1 },
     ]);
+    component.hasAcceptedTerms = true;
     spyOn(console, 'error');
     const form = {
       invalid: false,
@@ -168,6 +169,7 @@ describe('Checkout', () => {
     expect(component.discountAmount).toBe(120);
     expect(component.totalDue).toBe(1180);
 
+    component.hasAcceptedTerms = true;
     createPaymentOrder.and.rejectWith(new Error('Payment service unavailable'));
     spyOn(console, 'error');
     await component.startPayment({
@@ -181,6 +183,23 @@ describe('Checkout', () => {
       'WEAVE10',
     );
     expect(component.isSubmitting).toBeFalse();
+  });
+
+  it('requires terms acceptance before starting payment', async () => {
+    TestBed.inject(CartService).cartItems.set([
+      { id: 'product-1', name: 'Silk Dhoti', price: 1200, quantity: 1 },
+    ]);
+    const form = {
+      invalid: false,
+      form: { markAllAsTouched: jasmine.createSpy('markAllAsTouched') },
+    };
+
+    await component.startPayment(form);
+
+    expect(form.form.markAllAsTouched).toHaveBeenCalled();
+    expect(component.submissionError).toContain('accept the Terms and Conditions');
+    expect(createOrder).not.toHaveBeenCalled();
+    expect(createPaymentOrder).not.toHaveBeenCalled();
   });
 
 });

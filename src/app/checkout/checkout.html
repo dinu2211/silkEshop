@@ -294,6 +294,25 @@
           </div>
           <p class="shipping-note">Includes a fixed ₹100 delivery fee. Payment is securely processed by Razorpay.</p>
 
+          <div class="terms-consent">
+            <label>
+              <input
+                type="checkbox"
+                name="termsAccepted"
+                [(ngModel)]="hasAcceptedTerms"
+                required
+              />
+              <span>
+                I agree to the Terms and Conditions and acknowledge the Privacy Policy.
+              </span>
+            </label>
+            <a class="legal-link" routerLink="/terms-condition">View policies as a page</a>
+            <details class="terms-disclosure">
+              <summary>Read the policies here</summary>
+              <app-terms-condition [embedded]="true" />
+            </details>
+          </div>
+
           @if (shippingForm.submitted && shippingForm.invalid) {
             <p class="form-error" role="alert">Please complete the required fields with valid details.</p>
           }

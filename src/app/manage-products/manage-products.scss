@@ -121,6 +121,27 @@ h1,
   background: #fffdfa;
 }
 
+.premium-field {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  color: #554b3e;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.premium-field input {
+  width: 17px;
+  height: 17px;
+  accent-color: #817044;
+}
+
+.premium-tag {
+  background: #f2e7d2;
+  color: #765627;
+}
+
 .text-button {
   padding: 8px 0;
   border: 0;

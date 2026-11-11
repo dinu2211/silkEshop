@@ -5,6 +5,9 @@ export const routes: Routes = [{
   pathMatch: 'full',
   loadComponent: () => import('./home/home').then(m => m.Home)
 }, {
+  path: 'premium-collection',
+  loadComponent: () => import('./premium-collection/premium-collection').then(m => m.PremiumCollection)
+}, {
   path: 'about',
   loadComponent: () => import('./about/about').then(m => m.About)
 }, {
@@ -25,6 +28,9 @@ export const routes: Routes = [{
 }, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
+}, {
+  path: 'terms-condition',
+  loadComponent: () => import('./terms-condition/terms-condition').then(m => m.TermsCondition)
 }, {
   path: 'confirmation/:orderId',
   loadComponent: () => import('./conformation/conformation').then(m => m.Conformation)

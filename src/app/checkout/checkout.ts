@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../cart-service';
+import { TermsCondition } from '../terms-condition/terms-condition';
 import {
   Supabase,
   type OrderCustomer,
@@ -26,7 +27,7 @@ interface CheckoutForm {
 
 @Component({
   selector: 'app-checkout',
-  imports: [CurrencyPipe, FormsModule, MatIcon, RouterLink],
+  imports: [CurrencyPipe, FormsModule, MatIcon, RouterLink, TermsCondition],
   templateUrl: './checkout.html',
   styleUrl: './checkout.scss',
 })
@@ -55,6 +56,7 @@ export class Checkout {
   postalLookupError = '';
   isSubmitting = false;
   submissionError = '';
+  hasAcceptedTerms = false;
   promoCode = '';
   appliedPromo: PromoValidation | null = null;
   promoError = '';
@@ -162,6 +164,12 @@ export class Checkout {
   }
 
   async startPayment(form: CheckoutForm): Promise<void> {
+    if (!this.hasAcceptedTerms) {
+      this.submissionError = 'Please accept the Terms and Conditions before continuing.';
+      form.form.markAllAsTouched();
+      return;
+    }
+
     if (form.invalid || this.cartService.cartItems().length === 0) {
       form.form.markAllAsTouched();
       return;

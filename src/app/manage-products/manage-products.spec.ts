@@ -98,6 +98,7 @@ describe('ManageProducts', () => {
       images: [{ url: 'assets/images/new-dhoti.jpeg' }],
       category: ProductCategory.SilkDhoti,
       collection: '',
+      isPremium: true,
       idealFor: '',
       variantPrices: [
         {
@@ -116,6 +117,7 @@ describe('ManageProducts', () => {
     expect(supabase.createProduct).toHaveBeenCalledWith(
       jasmine.objectContaining({
         name: 'New Dhoti',
+        isPremium: true,
         variantPrices: [jasmine.objectContaining({ price: 2500, quantity: 3 })],
       }),
     );

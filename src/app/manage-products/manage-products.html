@@ -168,6 +168,10 @@
                   }
                 </select>
               </label>
+              <label class="premium-field">
+                <input type="checkbox" name="isPremium" [(ngModel)]="draft.isPremium" />
+                <span>Include in Premium collection</span>
+              </label>
               <label class="field">
                 <span>Ideal for</span>
                 <select name="idealFor" [(ngModel)]="draft.idealFor">
@@ -335,6 +339,9 @@
                     <span>{{ product.category }}</span>
                     @if (product.collection) {
                       <span>{{ product.collection }}</span>
+                    }
+                    @if (product.isPremium) {
+                      <span class="premium-tag">Premium</span>
                     }
                   </div>
                   <h3>{{ product.name }}</h3>

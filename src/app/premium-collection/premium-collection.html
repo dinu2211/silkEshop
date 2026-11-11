@@ -1,0 +1,79 @@
+<div class="premium-page">
+  <div class="premium-shell">
+    <section class="collection-intro" aria-labelledby="premium-title">
+      <p class="eyebrow">Woven for life's finest moments</p>
+      <h1 id="premium-title">The Premium Collection</h1>
+      <p class="intro-copy">
+        Discover exceptional fabrics and considered details, selected for celebrations worth
+        remembering.
+      </p>
+      <span class="intro-rule" aria-hidden="true"></span>
+    </section>
+
+    <section class="catalog" aria-labelledby="catalog-title">
+      <div class="catalog-heading">
+        <div>
+          <p class="eyebrow">Made to be treasured</p>
+          <h2 id="catalog-title">A more elevated tradition</h2>
+        </div>
+        <span class="catalog-count">{{ premiumProducts.length }} styles</span>
+      </div>
+
+      @if (loading() && products().length === 0) {
+        <p class="catalog-message" role="status">Finding the premium collection…</p>
+      }
+      @if (error(); as errorMessage) {
+        <div class="catalog-message catalog-error" role="alert">
+          <p>{{ errorMessage }}</p>
+          <button type="button" class="retry-button" (click)="loadProducts()">Try again</button>
+        </div>
+      }
+      @if (!loading() && !error() && premiumProducts.length === 0) {
+        <p class="catalog-message" role="status">
+          Our premium collection is being curated. Please check back soon.
+        </p>
+      }
+
+      <div class="product-grid">
+        <article class="product-item" *ngFor="let product of premiumProducts">
+          <mat-card class="product-card">
+            <div class="product-image-panel">
+              @if (product.imageUrls[0]) {
+                <img class="product-image" [src]="product.imageUrls[0]" [alt]="product.name" />
+              } @else {
+                <div class="image-placeholder" aria-hidden="true">Image coming soon</div>
+              }
+              <span class="premium-badge">Premium</span>
+            </div>
+            <mat-card-content class="product-content">
+              <p class="product-collection">{{ product.collection ?? product.category }}</p>
+              <h3>{{ product.name }}</h3>
+              <p class="product-description">{{ product.description }}</p>
+              @if (product.idealFor) {
+                <p class="product-ideal-for">Ideal for {{ product.idealFor }}</p>
+              }
+              <div class="product-purchase">
+                <strong class="price-label">
+                  @if (product.variantPrices.length > 1) { From }
+                  {{ startingPrice(product) | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </strong>
+                <button
+                  type="button"
+                  class="details-button"
+                  [attr.aria-label]="'View details for ' + product.name"
+                  (click)="openProductDetails(product)"
+                >
+                  View details <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
+
+@if (selectedProduct; as product) {
+  <app-product-details [product]="product" (close)="closeProductDetails()" />
+}
