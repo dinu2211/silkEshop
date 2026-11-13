@@ -26,6 +26,9 @@ export const routes: Routes = [{
   path: 'manage-promo',
   loadComponent: () => import('./manage-promo/manage-promo').then(m => m.ManagePromo)
 }, {
+  path: 'view-stock',
+  loadComponent: () => import('./view-stock/view-stock').then(m => m.ViewStock)
+}, {
   path: 'checkout',
   loadComponent: () => import('./checkout/checkout').then(m => m.Checkout)
 }, {

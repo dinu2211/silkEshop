@@ -49,8 +49,9 @@
           <p>Add new pieces or update the details shown in your shop.</p>
         </div>
         <div class="heading-actions">
+          <a class="secondary-button" routerLink="/view-stock">View stock</a>
           <button
-            class="secondary-button"
+            class="secondary-button refresh-button"
             type="button"
             [disabled]="isLoadingProducts() || isSaving()"
             (click)="loadProducts()"

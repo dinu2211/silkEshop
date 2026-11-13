@@ -74,6 +74,7 @@ describe('ManagePromo', () => {
     expect(fixture.nativeElement.textContent).toContain('Silk Dhoti');
     expect(fixture.nativeElement.textContent).toContain('Products to approve');
     expect(component.activeTab()).toBe('approval');
+    expect(fixture.nativeElement.querySelector('a[routerLink="/view-stock"]')).toBeTruthy();
 
     component.activeTab.set('promos');
     fixture.detectChanges();

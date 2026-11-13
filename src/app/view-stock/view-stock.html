@@ -1,0 +1,163 @@
+<main class="stock-page">
+  <div class="stock-shell">
+    <a class="back-link" routerLink="/manage-products">
+      <span aria-hidden="true">←</span>
+      Back to product management
+    </a>
+
+    @if (isCheckingSession()) {
+      <p class="page-message" role="status">Checking administrator access…</p>
+    } @else if (!isAdmin()) {
+      <section class="sign-in-card" aria-labelledby="sign-in-title">
+        <p class="eyebrow">WEAVE MADE · STAFF</p>
+        <h1 id="sign-in-title">Available stock</h1>
+        <p class="intro">Sign in with an administrator account to view current inventory.</p>
+        <form class="sign-in-form" (ngSubmit)="signIn()">
+          <label class="field">
+            <span>Admin user ID</span>
+            <input
+              type="text"
+              name="userId"
+              [(ngModel)]="userId"
+              autocomplete="username"
+              required
+            />
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+          @if (errorMessage()) {
+            <p class="error-message" role="alert">{{ errorMessage() }}</p>
+          }
+          <button class="primary-button" type="submit" [disabled]="isSigningIn()">
+            {{ isSigningIn() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      </section>
+    } @else {
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">WEAVE MADE · INVENTORY</p>
+          <h1>Available stock</h1>
+          <p>Only products and variants with units ready to sell are shown.</p>
+        </div>
+        <div class="heading-actions">
+          <a class="secondary-button" routerLink="/manage-products">Manage products</a>
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isLoadingProducts()"
+            (click)="loadProducts()"
+          >
+            {{ isLoadingProducts() ? 'Refreshing…' : 'Refresh stock' }}
+          </button>
+          <button class="text-button" type="button" (click)="signOut()">Sign out</button>
+        </div>
+      </header>
+
+      @if (errorMessage()) {
+        <p class="error-message page-alert" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <section class="stock-summary" aria-label="Stock summary">
+        <article class="summary-card">
+          <span class="summary-icon" aria-hidden="true">▤</span>
+          <div>
+            <span class="summary-label">Products in stock</span>
+            <strong>{{ availableProductCount() }}</strong>
+          </div>
+        </article>
+        <article class="summary-card">
+          <span class="summary-icon" aria-hidden="true">◈</span>
+          <div>
+            <span class="summary-label">Available variants</span>
+            <strong>{{ stockRows().length }}</strong>
+          </div>
+        </article>
+        <article class="summary-card summary-card-highlight">
+          <span class="summary-icon" aria-hidden="true">＋</span>
+          <div>
+            <span class="summary-label">Units available</span>
+            <strong>{{ totalAvailableUnits() }}</strong>
+          </div>
+        </article>
+      </section>
+
+      <section class="inventory-card" aria-labelledby="inventory-heading">
+        <header class="inventory-heading">
+          <div>
+            <p class="eyebrow">LIVE INVENTORY</p>
+            <h2 id="inventory-heading">In-stock items</h2>
+          </div>
+          <label class="search-field">
+            <span aria-hidden="true">⌕</span>
+            <span class="visually-hidden">Search available stock</span>
+            <input
+              type="search"
+              name="searchStock"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              placeholder="Search products or variants"
+            />
+          </label>
+        </header>
+
+        @if (isLoadingProducts() && products().length === 0) {
+          <p class="page-message" role="status">Loading available stock…</p>
+        } @else if (filteredStockRows().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon" aria-hidden="true">◇</span>
+            <h3>{{ searchTerm() ? 'No matching stock' : 'No items in stock' }}</h3>
+            <p>
+              {{
+                searchTerm()
+                  ? 'Try another product or variant search.'
+                  : 'Products will appear here when they have available units.'
+              }}
+            </p>
+          </div>
+        } @else {
+          <div class="stock-table-wrapper">
+            <table class="stock-table">
+              <thead>
+                <tr>
+                  <th scope="col">Product</th>
+                  <th scope="col">Variant</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Available</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of filteredStockRows(); track row.key) {
+                  <tr>
+                    <td>
+                      <div class="product-cell">
+                        <img [src]="row.product.imageUrls[0]" [alt]="row.product.name" />
+                        <div>
+                          <strong>{{ row.product.name }}</strong>
+                          <span>{{ row.product.category }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ variantDescription(row.variant) }}</td>
+                    <td>{{ row.variant.price | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+                    <td>
+                      <span class="quantity-pill">{{ row.variant.quantity }} units</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  </div>
+</main>

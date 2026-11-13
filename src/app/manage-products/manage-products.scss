@@ -84,6 +84,10 @@ h1,
   gap: 16px;
 }
 
+.heading-actions a {
+  text-decoration: none;
+}
+
 .primary-button,
 .secondary-button {
   display: inline-flex;
@@ -711,7 +715,7 @@ select:focus-visible {
     gap: 10px;
   }
 
-  .heading-actions .secondary-button {
+  .heading-actions .refresh-button {
     display: none;
   }
 

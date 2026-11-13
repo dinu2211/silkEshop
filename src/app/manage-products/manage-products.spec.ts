@@ -78,6 +78,7 @@ describe('ManageProducts', () => {
     expect(component).toBeTruthy();
     expect(supabase.getAdminProducts).toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Silk Dhoti');
+    expect(fixture.nativeElement.querySelector('a[routerLink="/view-stock"]')).toBeTruthy();
   });
 
   it('uses the order-management sign-in and creates a product', async () => {
